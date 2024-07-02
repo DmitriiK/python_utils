@@ -4,7 +4,8 @@ import shutil
 from typing import List
 import pyperclip
 
-def batch_copy_files(input_folder, file_mask):
+root_folder = r'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine'
+def batch_copy_files(input_folder, file_mask, output_folder = None):
     # Get a list of files matching the specified mask
     matching_files = glob.glob(os.path.join(input_folder, file_mask))
 
@@ -14,13 +15,13 @@ def batch_copy_files(input_folder, file_mask):
         file_name, file_extension = os.path.splitext(os.path.basename(original_file_path))
 
         # Modify the file name (prepend "RussellUS2")
-        new_file_name = f"PullData_RussellUS2_{file_name}{file_extension}"
+        new_file_name = f'{file_name}{file_extension}'.replace("US_", "US2_")
+        if not output_folder:
+            output_folder = input_folder
+        new_file_path = os.path.join(output_folder, new_file_name)
 
-        # Construct the new file path
-        new_file_path = os.path.join(input_folder, new_file_name)
-
-        # Copy the file to the new location
-        shutil.move(original_file_path, new_file_path)
+        # Copy the file to the new locat'zion
+        shutil.copy(original_file_path, new_file_path)
         print(f"File copied: {original_file_path} -> {new_file_path}")
 
 def clone_file_to_many(inp_folder:str, ent_s: str, name_template: str, content_template: str):
@@ -37,9 +38,10 @@ def clone_file_to_many(inp_folder:str, ent_s: str, name_template: str, content_t
 
 
 def test_batch_copy():
-    input_folder = r"C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeedEngineIndex\dbo\Stored Procedures\Merge\RussellUS"
-    file_mask = "GenerateLoad_RussellUS_*.*"
-    batch_copy_files(input_folder, file_mask)
+    input_folder = root_folder+ r"\DataFeedEngineIndex\dbo\Tables"
+    output_folder = r'C:\Users\dmitrii_kalmanovich\source\tmp'
+    file_mask = "RussellUS_*.*"
+    batch_copy_files(input_folder, file_mask, output_folder)
 
 def test_clone_file_to_many():
     inp_folder = r'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeedEngineIndex\dbo\Stored Procedures\Procs1'
@@ -123,19 +125,20 @@ def generate_merge_stm(tbl_srs: str, tbl_dst: str, cols: str, pk_cols_ordinal = 
     return stm
 
 def test_generate_merge_stm():
-    src_tbl = 'stg.RussellUS2_IndexValue_tbl '
-    dst_tbl = 'dbo.RussellUS2_IndexValue_tbl'
+    src_tbl = 'stg.RussellUS2_ConstituentIdentifier_tbl '
+    dst_tbl = 'dbo.RussellUS2_ConstituentIdentifier_tbl'
     cols = """
-    [tradingItemId],
-    [valueDate],
-    [dataItemId],
-    [value],
-    [endOfMonthFlag]
+     [constituentId],
+    [identifierTypeId],
+    [fromDate],
+    [identifierValue],
+    [toDate]
     """
     pko = 3
     stm = generate_merge_stm(src_tbl, dst_tbl, cols, pko)
     pyperclip.copy(stm)
 
-test_generate_merge_stm()
+
+test_batch_copy()
 
     
