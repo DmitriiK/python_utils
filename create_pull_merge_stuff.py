@@ -11,8 +11,8 @@ from file_utils import find_file
 sep = """;
 GO
 """
-
-root_folder_tbl = r'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeeEngineMI\dbo\Tables'
+root_folder = r'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeeEngineMI'
+root_folder_tbl = fr'{root_folder}\dbo\Tables'
 deploy_script_file_path = 'deploy_scrip.sql'
 
 def get_table_def( table_name) -> str:
@@ -34,9 +34,10 @@ def create_table_script( table_name, new_table_name, new_schema = None):
             script2 = script2.replace('dbo.', new_schema +'.')
     return script2
 
-def create_view_script( targ_table_name: str):
+def create_view_script( targ_table_name: str, sql_stm: str):
     view_name =f'dbo.DataFeedOut_{targ_table_name}'.replace("_tbl", "_vw")
-    script= f'CREATE VIEW {view_name} as SELECT * FROM {targ_table_name}'    
+    script= f"""CREATE VIEW {view_name} as 
+    sql_stm"""    
     return script, view_name
 
 
@@ -122,6 +123,18 @@ def get_table_list()-> List[str]:
        return [line.strip() for line in f]
 
 
+def batch_create_view():
+    sscr = ''
+    ls =  get_table_list()
+    ts = parse_PullData_prc()
+    for table, stm in ts:
+        table_short = table.split('.')[-1]
+        if table_short in ls:
+            scr, name = create_view_script(table_short, stm)
+            sscr += scr + sep
+    pyperclip.copy(sscr)
+
+
 def batch_create_tables():
     sscr = ''
     ls =  get_table_list()
@@ -138,6 +151,28 @@ def batch_create_tables():
         sscr +=scr + sep
     pyperclip.copy(sscr)
 
+def parse_PullData_prc():
+    file_path = fr'{root_folder}\dbo\Stored Procedures\TransactionMA_PullData_prc.sql'
+    with open(file_path, 'r') as f:
+        script = f.read()
+      # Regex to capture the SELECT INTO statement followed by CREATE INDEX statement
+    regex = (r'drop\s+table\s+[a-zA-Z0-9._]+\s+' 
+            + r'(SELECT\s.*?\sINTO\s+([a-zA-Z0-9._]+)\s.*?FROM\s+.*?;?)' 
+            + r'\s*CREATE\s+UNIQUE')
+    pattern = re.compile(regex, re.IGNORECASE | re.DOTALL)
+
+    # Find all matches in the script
+    matches = pattern.findall(script)
+
+    for match in matches:
+        raw_statement = match[0]
+        table_name = match[1]
+
+        # Remove 'INTO <table_name>' part
+        sql_statement = re.sub(r'\sINTO\s+' + re.escape(table_name), '', raw_statement, flags=re.IGNORECASE)
+
+        yield (table_name, sql_statement.strip())        
+
 # batch_create_merges()
-batch_create_tables()
+batch_create_view()
 
