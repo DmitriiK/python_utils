@@ -1,0 +1,4 @@
+ini
+   [flake8]
+   ignore = C0114
+   

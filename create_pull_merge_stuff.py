@@ -41,6 +41,42 @@ def create_view_script( targ_table_name: str, sql_stm: str):
     return script, view_name
 
 
+def create_pull_sp(sql_definition: str):
+       # Regular expression to capture the table name
+    table_name_pattern = re.compile(r'CREATE\s+TABLE\s+([^(\s]+)')
+    table_name_match = table_name_pattern.search(sql_definition)
+
+    table_name = table_name_match.group(1).split('.')[-1].strip('[]')
+    ent_name = table_name.replace('_tbl', '').replace('Transaction', 'Transaction2')
+    
+    # Regular expression to capture columns between parentheses
+    columns_pattern = re.compile(r'\((.*?)\)', re.DOTALL)
+    columns_match = columns_pattern.search(sql_definition)
+    columns_text = columns_match.group(1).strip()
+    cols = [x.strip().split(' ')[0] for x in columns_text.split(',') 
+            if not (x.strip().split(' ')[0]).isdigit()] # sorry..
+    columns_line = ', '.join(cols)
+    sp_name = f'[dbo].[PullData_{ent_name}_prc] '
+    trg_tbl = f'[stg].[{table_name}]'
+    create_sp_stm = f"""
+CREATE   PROCEDURE {sp_name}
+AS
+BEGIN 
+TRUNCATE TABLE {trg_tbl};
+
+INSERT INTO {trg_tbl}
+(
+    {columns_line}
+)
+SELECT 
+    {columns_line}
+FROM [dbo].[DataFeedOut_{ent_name}_vw];
+END
+"""
+    return create_sp_stm, sp_name
+
+
+
 
 def batch_create(create_method, output_dir: str):
     sscr = ''
@@ -58,6 +94,9 @@ def batch_create(create_method, output_dir: str):
 
 def batch_create_merges():
     batch_create(create_method=create_merge_sp, output_dir=r'output\sps')
+
+def batch_create_pull_sps():
+    batch_create(create_method=create_pull_sp, output_dir=r'output\sps')
 
 
 def create_merge_sp(table_def: str):
@@ -174,5 +213,6 @@ def parse_PullData_prc():
         yield (table_name, sql_statement.strip())        
 
 # batch_create_merges()
-batch_create_view()
+# batch_create_view()
+batch_create_pull_sps()
 

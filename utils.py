@@ -119,8 +119,7 @@ def generate_merge_stm(tbl_srs: str, tbl_dst: str, cols: str, pk_cols_ordinal = 
                 INSERT ({insrt})
                 VALUES ({insrt2})
             WHEN NOT MATCHED BY SOURCE THEN
-                DELETE 
-            ;;"""
+            ;"""
     print(stm)
     return stm
 
