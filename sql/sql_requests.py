@@ -2,7 +2,9 @@ import pyodbc
 from typing import List
 import logging
 from collections import namedtuple
+
 from sql.sql_config import SQL_SERVER, DB_NAME
+from sql.sql_templates import GET_COLUMNS, MERGE_STM
 
 
 ColumnInfo = namedtuple('ColumnInfo', ['column_name', 'is_in_pk'])
@@ -25,29 +27,12 @@ def create_connection():
     return connection
 
 
-
 def get_columns(table_name: str, schema_name: str = 'dbo') -> List[ColumnInfo]:
     conn = create_connection()
     cursor = conn.cursor()
 
     # Query to get column names and PK status
-    query = f"""
-    SELECT
-        c.name AS ColumnName,
-        CASE
-            WHEN i.index_id IS NOT NULL THEN 1
-            ELSE 0
-        END AS IsPK
-    FROM
-        sys.columns c
-    LEFT JOIN
-        sys.index_columns ic ON c.object_id = ic.object_id AND c.column_id = ic.column_id
-    LEFT JOIN
-        sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id AND (i.is_primary_key = 1 OR  i.type=1)
-    WHERE
-        c.object_id = OBJECT_ID('{schema_name}.{table_name}')
-    """
-
+    query = GET_COLUMNS.format(schema_name=schema_name, table_name=table_name)
     # Execute the query
     cursor.execute(query)
     columns = [ColumnInfo(row.ColumnName, bool(row.IsPK)) for row in cursor.fetchall()]
@@ -68,21 +53,8 @@ def generate_merge_stm(tbl_srs: str, tbl_dst: str):
     non_pk_cols = [x.column_name for x in cols if not x.is_in_pk]
     update_part = ',\n'.join([f'{x} = SRC.{x}' for x in non_pk_cols])
     update_cond = ' AND '.join([f"ISNULL(DST.{x}, 0) <> ISNULL(SRC.{x}, 0) " for x in non_pk_cols])
+    stm = MERGE_STM.format(tbl_dst=tbl_dst, tbl_srs=tbl_srs, join_cond=join_cond, update_cond=update_cond,
+                           update_part=update_part, insrt=insrt, insrt2=insrt2)
 
-    stm = f""" MERGE {tbl_dst} AS DST
-            USING   {tbl_srs} as SRC WITH (NOLOCK)
-                ON {join_cond}
-            WHEN MATCHED
-                AND (
-                    {update_cond}
-                ) THEN
-                UPDATE SET
-                   {update_part}
-            WHEN NOT MATCHED BY TARGET THEN
-                INSERT ({insrt})
-                VALUES ({insrt2})
-            WHEN NOT MATCHED BY SOURCE THEN
-                DELETE
-            ;"""
     print(stm)
     return stm
