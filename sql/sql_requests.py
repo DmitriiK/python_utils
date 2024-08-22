@@ -1,10 +1,12 @@
 import pyodbc
+from typing import List
 import logging
 from collections import namedtuple
 from sql.sql_config import SQL_SERVER, DB_NAME
 
 
 ColumnInfo = namedtuple('ColumnInfo', ['column_name', 'is_in_pk'])
+
 
 # Define the server and database parameters
 def create_connection():
@@ -16,15 +18,15 @@ def create_connection():
         f'Encrypt=yes;'
         f'TrustServerCertificate=yes;'
     )
-    print(connection_string)
+    logging.info(connection_string)
     print('connecting...')
-    connection = pyodbc.connect(connection_string)
+    connection = pyodbc.connect(connection_string, timeout=60)
     print("Connection successful!")
     return connection
 
 
 
-def get_columns(table_name: str, schema_name: str = 'dbo'):
+def get_columns(table_name: str, schema_name: str = 'dbo') -> List[ColumnInfo]:
     conn = create_connection()
     cursor = conn.cursor()
 
@@ -41,7 +43,7 @@ def get_columns(table_name: str, schema_name: str = 'dbo'):
     LEFT JOIN
         sys.index_columns ic ON c.object_id = ic.object_id AND c.column_id = ic.column_id
     LEFT JOIN
-        sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id AND i.is_primary_key = 1
+        sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id AND (i.is_primary_key = 1 OR  i.type=1)
     WHERE
         c.object_id = OBJECT_ID('{schema_name}.{table_name}')
     """
@@ -58,12 +60,12 @@ def get_columns(table_name: str, schema_name: str = 'dbo'):
 
 
 def generate_merge_stm(tbl_srs: str, tbl_dst: str):
-    cols = get_columns(table_name=tbl_srs)
-    insrt = ', '.join([x[0] for x in cols])
-    insrt2 = ', '.join([f'SRC.{x[0]}' for x in cols])
+    cols = get_columns(table_name=tbl_dst)
+    insrt = ', '.join([x.column_name for x in cols])
+    insrt2 = ', '.join([f'SRC.{x.column_name}' for x in cols])
 
-    join_cond = 'AND '.join([f'DST.{x} = SRC.{x}' for x in cols if cols[1]])
-    non_pk_cols = [x for x in cols if not cols[1]]
+    join_cond = ' AND '.join([f'DST.{x.column_name} = SRC.{x.column_name}' for x in cols if x.is_in_pk])
+    non_pk_cols = [x.column_name for x in cols if not x.is_in_pk]
     update_part = ',\n'.join([f'{x} = SRC.{x}' for x in non_pk_cols])
     update_cond = ' AND '.join([f"ISNULL(DST.{x}, 0) <> ISNULL(SRC.{x}, 0) " for x in non_pk_cols])
 
@@ -80,6 +82,7 @@ def generate_merge_stm(tbl_srs: str, tbl_dst: str):
                 INSERT ({insrt})
                 VALUES ({insrt2})
             WHEN NOT MATCHED BY SOURCE THEN
+                DELETE
             ;"""
     print(stm)
     return stm
