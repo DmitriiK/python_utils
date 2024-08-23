@@ -3,7 +3,7 @@ from typing import List
 import logging
 from collections import namedtuple
 
-from sql.sql_config import SQL_SERVER, DB_NAME
+from sql.config import SQL_SERVER, DB_NAME
 from sql.sql_templates import GET_COLUMNS, MERGE_STM
 
 
@@ -27,12 +27,12 @@ def create_connection():
     return connection
 
 
-def get_columns(table_name: str, schema_name: str = 'dbo') -> List[ColumnInfo]:
+def get_columns(table_name: str) -> List[ColumnInfo]:
     conn = create_connection()
     cursor = conn.cursor()
 
     # Query to get column names and PK status
-    query = GET_COLUMNS.format(schema_name=schema_name, table_name=table_name)
+    query = GET_COLUMNS.format(table_name=table_name)
     # Execute the query
     cursor.execute(query)
     columns = [ColumnInfo(row.ColumnName, bool(row.IsPK)) for row in cursor.fetchall()]
@@ -40,6 +40,8 @@ def get_columns(table_name: str, schema_name: str = 'dbo') -> List[ColumnInfo]:
     # Close the connection
     cursor.close()
     conn.close()
+    if not columns:
+        raise Exception(f'looks like table {table_name} has not been created yet')
 
     return columns
 
@@ -55,6 +57,4 @@ def generate_merge_stm(tbl_srs: str, tbl_dst: str):
     update_cond = ' AND '.join([f"ISNULL(DST.{x}, 0) <> ISNULL(SRC.{x}, 0) " for x in non_pk_cols])
     stm = MERGE_STM.format(tbl_dst=tbl_dst, tbl_srs=tbl_srs, join_cond=join_cond, update_cond=update_cond,
                            update_part=update_part, insrt=insrt, insrt2=insrt2)
-
-    print(stm)
     return stm

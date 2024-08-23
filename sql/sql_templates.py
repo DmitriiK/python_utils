@@ -13,12 +13,12 @@ LEFT JOIN
 LEFT JOIN
     sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id AND (i.is_primary_key = 1 OR  i.type=1)
 WHERE
-    c.object_id = OBJECT_ID('{schema_name}.{table_name}')
+    c.object_id = OBJECT_ID('{table_name}')
 """
 
 MERGE_STM = """ MERGE {tbl_dst} AS DST
             USING   {tbl_srs} as SRC WITH (NOLOCK)
-                ON {join_cond}  
+                ON {join_cond}
             WHEN MATCHED
                 AND (
                     {update_cond}
@@ -32,8 +32,28 @@ MERGE_STM = """ MERGE {tbl_dst} AS DST
                 DELETE
             ;"""
 
-MERGE_SP = """CREATE {or_alter} PROCEDURE {sp_name}}
+
+MERGE_SP = """CREATE {or_alter}PROCEDURE {sp_name}
   AS
   BEGIN
       {merge_stm}
   END"""
+
+PULL_SP = """"CREATE  {or_alter}  PROCEDURE [dbo].[PullData_MATransaction2MktDataDate_prc]
+AS
+BEGIN
+    TRUNCATE TABLE [stg].[{table_name}}];
+
+    INSERT INTO [stg].[{table_name}]
+    (
+       {col_lst}
+    )
+    SELECT
+         {col_lst}
+    FROM {view_name};
+END
+"""
+
+def or_alter(alter_mi: bool):
+    return 'OR ALTER ' if alter_mi else ''
+
