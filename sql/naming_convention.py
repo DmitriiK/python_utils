@@ -7,7 +7,11 @@ def stg_table_name(entity_name):
 
 
 def merge_sp_name(entity_name):
-    return f'[dbo].[MergeData_{entity_name}_prc]'
+    return f'dbo.MergeData_{entity_name}_prc'
+
+
+def pull_sp_name(entity_name):
+    return f'dbo.PullData_{entity_name}_prc'
 
 
 # renaming patterns for making of clones of some specific tables

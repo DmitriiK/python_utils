@@ -39,7 +39,7 @@ MERGE_SP = """CREATE {or_alter}PROCEDURE {sp_name}
       {merge_stm}
   END"""
 
-PULL_SP = """"CREATE  {or_alter}  PROCEDURE [dbo].[PullData_MATransaction2MktDataDate_prc]
+PULL_SP = """"CREATE  {or_alter}  PROCEDURE {sp_name}
 AS
 BEGIN
     TRUNCATE TABLE [stg].[{table_name}}];

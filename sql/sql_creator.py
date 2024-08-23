@@ -10,5 +10,5 @@ def create_merge_sp(entity_name, entity_name2=None, create_or_alter=True):
     src_tbl = nc.stg_table_name(entity_name)
     merge_stm = generate_merge_stm(dst_tbl, src_tbl)
     create_sp_stm = tmpl.MERGE_SP.format(sp_name=sp_name, merge_stm=merge_stm, or_alter=tmpl.or_alter(create_or_alter))
-    return create_sp_stm
+    return create_sp_stm, sp_name
    

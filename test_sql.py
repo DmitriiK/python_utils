@@ -1,7 +1,9 @@
 import unittest
+import os
 from sql.sql_requests import create_connection, get_columns, generate_merge_stm
 import sql.naming_convention as nc
 import sql.sql_creator as sqlcr
+import sql.output_to as outo
 
 entity_name = 'MATransactionToAdvisor'
 entity_name2 = nc.trans_ft_rename(entity_name)
@@ -27,6 +29,11 @@ class TestSQL(unittest.TestCase):
         print(ret)
 
     def test_generate_merge_sp(self):
-        ret = sqlcr.create_merge_sp(entity_name, entity_name2)
-        assert ret
-        print(ret)
+        spdef, spname = sqlcr.create_merge_sp(entity_name, entity_name2)
+        assert spdef, spname
+        print(spdef)
+
+    def test_to_file(self):
+        spdef, spname = "create xxx as yyy", 'dbo.xx_sp'
+        file_path = os.path.join(r'.\output', spname.split('.')[-1] + '.sql')
+        outo.output_to_file(file_path, spdef)
