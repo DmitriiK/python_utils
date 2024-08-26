@@ -1,8 +1,7 @@
 import unittest
 import os
-from sql.sql_requests import create_connection, get_columns, generate_merge_stm
+from sql.sql_requests import MetaDataRequester
 import sql.naming_convention as nc
-import sql.sql_creator as sqlcr
 import sql.output_to as outo
 
 entity_name = 'MATransactionToAdvisor'
@@ -15,28 +14,22 @@ class TestSQL(unittest.TestCase):
 
     # @unittest.skip('tested already')
     def test_connect(self):
-        conn = create_connection()
-        assert (conn)
+        with MetaDataRequester() as mdr:
+            assert not mdr.connection.closed
 
     def test_get_columns(self):
-        ret = get_columns(table_name=trg_table)
-        assert ret
-        print(ret)
+        with MetaDataRequester() as mdr:
+            ret = mdr.get_columns(table_name=trg_table)
+            assert ret
+            print(ret)
 
     def test_generate_merge_stm(self):
-        ret = generate_merge_stm(tbl_srs=stg_tbl, tbl_dst=trg_table)
-        assert ret
-        print(ret)
+        with MetaDataRequester() as mdr:
+            ret = mdr.generate_merge_stm(tbl_srs=stg_tbl, tbl_dst=trg_table)
+            assert ret
+            print(ret)
 
-    def test_generate_merge_sp(self):
-        spdef, spname = sqlcr.create_merge_sp(entity_name, entity_name2)
-        assert spdef, spname
-        print(spdef)
 
-    def test_generate_pull_sp(self):
-        spdef, spname = sqlcr.create_pull_sp(entity_name, entity_name2)
-        assert spdef, spname
-        print(spdef)
 
     def test_to_file(self):
         spdef, spname = "create xxx as yyy", 'dbo.xx_sp'
