@@ -14,6 +14,10 @@ def pull_sp_name(entity_name):
     return f'dbo.PullData_{entity_name}_prc'
 
 
+def source_view_name(entity_name):
+    return f'dbo.{entity_name}_vw'
+
+
 # renaming patterns for making of clones of some specific tables
 def trans_ft_rename(x):
     return x.replace('Transaction', 'Transaction2')

@@ -46,7 +46,7 @@ def get_columns(table_name: str) -> List[ColumnInfo]:
     return columns
 
 
-def generate_merge_stm(tbl_srs: str, tbl_dst: str):
+def generate_merge_stm(tbl_srs: str, tbl_dst: str) -> str:
     cols = get_columns(table_name=tbl_dst)
     insrt = ', '.join([x.column_name for x in cols])
     insrt2 = ', '.join([f'SRC.{x.column_name}' for x in cols])
@@ -58,3 +58,11 @@ def generate_merge_stm(tbl_srs: str, tbl_dst: str):
     stm = MERGE_STM.format(tbl_dst=tbl_dst, tbl_srs=tbl_srs, join_cond=join_cond, update_cond=update_cond,
                            update_part=update_part, insrt=insrt, insrt2=insrt2)
     return stm
+
+
+def generate_insert_stm(view_srs: str, tbl_dst: str) -> str:
+    cols = get_columns(table_name=tbl_dst)
+    cols_str = ','.join([x.column_name for x in cols])
+
+    return f"""INSERT INTO {tbl_dst} ({cols_str})
+    SELECT {cols_str} FROM {view_srs}"""

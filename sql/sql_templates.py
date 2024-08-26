@@ -42,17 +42,11 @@ MERGE_SP = """CREATE {or_alter}PROCEDURE {sp_name}
 PULL_SP = """"CREATE  {or_alter}  PROCEDURE {sp_name}
 AS
 BEGIN
-    TRUNCATE TABLE [stg].[{table_name}}];
-
-    INSERT INTO [stg].[{table_name}]
-    (
-       {col_lst}
-    )
-    SELECT
-         {col_lst}
-    FROM {view_name};
+    TRUNCATE TABLE  {table_name}
+    {ins_stm};
 END
 """
+
 
 def or_alter(alter_mi: bool):
     return 'OR ALTER ' if alter_mi else ''

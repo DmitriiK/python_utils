@@ -33,6 +33,11 @@ class TestSQL(unittest.TestCase):
         assert spdef, spname
         print(spdef)
 
+    def test_generate_pull_sp(self):
+        spdef, spname = sqlcr.create_pull_sp(entity_name, entity_name2)
+        assert spdef, spname
+        print(spdef)
+
     def test_to_file(self):
         spdef, spname = "create xxx as yyy", 'dbo.xx_sp'
         file_path = os.path.join(r'.\output', spname.split('.')[-1] + '.sql')
