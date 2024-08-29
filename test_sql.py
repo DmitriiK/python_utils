@@ -29,6 +29,11 @@ class TestSQL(unittest.TestCase):
             assert ret
             print(ret)
 
+    def test_generate_create_table_stm(self):
+        with MetaDataRequester() as mdr:
+            ret = mdr.get_table_script(nc.table_name(entity_name))
+            assert ret
+            print(ret)
 
 
     def test_to_file(self):

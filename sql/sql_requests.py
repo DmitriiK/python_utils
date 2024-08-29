@@ -7,7 +7,18 @@ from sql.config import SQL_SERVER, DB_NAME
 from sql.sql_templates import GET_COLUMNS, MERGE_STM
 
 
-ColumnInfo = namedtuple('ColumnInfo', ['column_name', 'is_in_pk'])
+ColumnInfo = namedtuple('ColumnInfo', ['column_name',
+                                       'data_type',
+                                       'precision',
+                                       'scale',
+                                       'is_nullable',
+                                       'is_identity',
+                                       'seed_value',
+                                       'increment_value',
+                                       'default_constr',
+                                       'check_constr',
+                                       'is_in_pk'
+                                       ])
 
 
 class MetaDataRequester:
@@ -35,9 +46,23 @@ class MetaDataRequester:
 
         # Query to get column names and PK status
         query = GET_COLUMNS.format(table_name=table_name)
+        print(query)
         # Execute the query
         cursor.execute(query)
-        columns = [ColumnInfo(row.ColumnName, bool(row.IsPK)) for row in cursor.fetchall()]
+        rows = cursor.fetchall()
+        columns = [ColumnInfo(
+            row.column_name,
+            row.data_type,
+            row.precision,
+            row.scale,
+            row.is_nullable,
+            row.is_identity,
+            row.seed_value,
+            row.increment_value,
+            row.default_constr,
+            row.check_constr,
+            row.is_pk)
+            for row in rows]
         cursor.close()
 
         if not columns:
@@ -65,9 +90,15 @@ class MetaDataRequester:
         return f"""INSERT INTO {tbl_dst} ({cols_str})
         SELECT {cols_str} FROM {view_srs}"""
 
-    def get_table_script(self, table_name, schema='dbo'):
+    def get_table_script(self, table_name):
         cursor = self.connection.cursor()
-        
+        ts = table_name.split('.')
+        if len(ts) > 1:
+            table_name = ts[1].strip('[]')
+            schema = ts[0].strip('[]')
+        else:
+            table_name = ts[0].strip('[]')
+            schema = 'dbo'
         # Get the table creation script.
         cursor.execute(f'''
             SELECT c.*
