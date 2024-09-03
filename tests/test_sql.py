@@ -4,10 +4,11 @@ from sql.sql_requests import MetaDataRequester
 import sql.naming_convention as nc
 import sql.output_to as outo
 
-entity_name = 'MATransactionToAdvisor'
-entity_name2 = nc.trans_ft_rename(entity_name)
+entity_name = 'Symbol_FTTickerSymbol' # 'Symbol_IBESTickerEnhanced'
+entity_name2 = nc.default_rename(entity_name)
 trg_table = nc.table_name(entity_name2)
 stg_tbl = nc.stg_table_name(entity_name)
+source_view_name = 'Symbol_FTTicker2Source_vw'
 
 
 class TestSQL(unittest.TestCase):
@@ -28,6 +29,23 @@ class TestSQL(unittest.TestCase):
             ret = mdr.generate_merge_stm(tbl_srs=stg_tbl, tbl_dst=trg_table)
             assert ret
             print(ret)
+
+    def test_generate_merge_sp(self):
+        with MetaDataRequester() as mdr:
+            spdef, spname = mdr.create_merge_sp(entity_name, entity_name2)
+            assert spdef, spname
+            print(spdef)
+
+            file_path = os.path.join(r'.\output', spname.split('.')[-1] + '.sql')
+            outo.output_to_file(file_path, spdef)
+
+    def test_generate_pull_sp(self):
+        with MetaDataRequester() as mdr:
+            spdef, spname = mdr.create_pull_sp(entity_name, entity_name2, source_view_name=source_view_name)
+            assert spdef, spname
+            print(spdef)
+            file_path = os.path.join(r'.\output', spname.split('.')[-1] + '.sql')
+            outo.output_to_file(file_path, spdef)
 
     def test_generate_create_table_stm(self):
         with MetaDataRequester() as mdr:
