@@ -55,6 +55,6 @@ class TestSQL(unittest.TestCase):
 
 
     def test_to_file(self):
-        spdef, spname = "create xxx as yyy", 'dbo.xx_sp'
-        file_path = os.path.join(r'.\output', spname.split('.')[-1] + '.sql')
-        outo.output_to_file(file_path, spdef)
+        spdef, object_type, spname = "create table xxx ()", 'Table', 'dbo.xx_tbl'
+        file_path = os.path.join(r'.\output')
+        outo.output_to_file(file_path, object_type, spname, spdef)
