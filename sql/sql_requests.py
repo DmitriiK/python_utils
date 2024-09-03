@@ -4,7 +4,8 @@ import logging
 from collections import namedtuple
 
 from sql.config import SQL_SERVER, DB_NAME
-from sql.sql_templates import GET_COLUMNS, MERGE_STM
+from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, PULL_SP, or_alter
+import sql.naming_convention as nc
 
 
 ColumnInfo = namedtuple('ColumnInfo', ['column_name',
@@ -43,11 +44,7 @@ class MetaDataRequester:
     def get_columns(self, table_name: str) -> List[ColumnInfo]:
         conn = self.connection
         cursor = conn.cursor()
-
-        # Query to get column names and PK status
-        query = GET_COLUMNS.format(table_name=table_name)
-        print(query)
-        # Execute the query
+        query = GET_COLUMNS.format(table_name=table_name)        
         cursor.execute(query)
         rows = cursor.fetchall()
         columns = [ColumnInfo(
@@ -66,7 +63,8 @@ class MetaDataRequester:
         cursor.close()
 
         if not columns:
-            raise Exception(f'looks like table {table_name} has not been created yet')
+            ex_mess = f'looks like table {table_name} has not been created yet'
+            raise Exception(ex_mess)
 
         return columns
 
@@ -89,6 +87,25 @@ class MetaDataRequester:
 
         return f"""INSERT INTO {tbl_dst} ({cols_str})
         SELECT {cols_str} FROM {view_srs}"""
+
+    def create_merge_sp(self, entity_name, entity_name2=None, create_or_alter=True):
+        entity_name2 = entity_name2 or nc.default_rename(entity_name)
+        sp_name = nc.merge_sp_name(entity_name=entity_name2)
+        trg_table = nc.table_name(entity_name2)
+        stg_tbl = nc.stg_table_name(entity_name)
+        merge_stm = self.generate_merge_stm(tbl_srs=stg_tbl, tbl_dst=trg_table)
+        create_sp_stm = MERGE_SP.format(sp_name=sp_name, merge_stm=merge_stm, or_alter=or_alter(create_or_alter))
+        return create_sp_stm, sp_name
+  
+    def create_pull_sp(self, entity_name, entity_name2=None, source_view_name=None, create_or_alter=True):
+        entity_name2 = entity_name2 or nc.default_rename(entity_name)
+        source_view_name = source_view_name or nc.source_view_name(entity_name)
+        sp_name = nc.pull_sp_name(entity_name=entity_name2)
+        dst_tbl = nc.stg_table_name(entity_name)
+        ins_stm = self.generate_insert_stm(source_view_name, dst_tbl)
+        create_sp_stm = PULL_SP.format(sp_name=sp_name, table_name=dst_tbl, ins_stm=ins_stm, 
+                                       or_alter=or_alter(create_or_alter))
+        return create_sp_stm, sp_name
 
     def get_table_script(self, table_name):
         cursor = self.connection.cursor()
@@ -123,7 +140,7 @@ class MetaDataRequester:
             col_definitions.append(col_definition)
 
         create_script = f"CREATE TABLE [{schema}].[{table_name}] (\n    " + ",\n    ".join(col_definitions) + "\n);\n"
-        
+
         # Get the primary key constraints
         cursor.execute(f'''
             SELECT column_name

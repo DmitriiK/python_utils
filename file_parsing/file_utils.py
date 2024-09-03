@@ -83,6 +83,33 @@ def clone_table_from_file(input_folder: str, entity_name: str, output_folder: st
     return stms
 
 
+def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str = r'.\output'):
+    view_name = nc.source_view_name(entity_name)
+    view_name = view_name.split('.')[-1]  # to eliminate schema name
+    view_name2 = nc.source_view_name(nc.default_rename(entity_name)).split('.')[-1]
+    file_path = find_file(root_folder=input_folder, filename=f'{view_name}.sql')
+
+    if not file_path:
+        print(f'file for view {view_name} was not found! trying to apply antoher pattern')
+        file_path = find_file(root_folder=input_folder, filename=f'{nc.fix_shit(view_name)}.sql')
+
+    if not file_path:
+        print(f'file for view {view_name} was not found! creationg some stub for manual creation')
+        view_def = f"""CREATE VIEW {view_name2} as 
+                    SELECT 1 as stub"""
+    else:
+        print(file_path)
+        with open(file_path, 'r', encoding='utf-8-sig') as f:  # without encoding byt order mark ï»¿ might happen
+            view_def = f.read()
+
+    new_view_def = nc.SnapshotReplace(view_def)
+    new_view_def = new_view_def.replace(view_name, view_name2) + '\nGO\n'
+    output_to_file(output_folder, "Views", view_name2, new_view_def)
+    return new_view_def
+
+
+
+
 """For batch creation"""
 
 
@@ -90,5 +117,13 @@ def clone_tables_from_file(input_folder: str, entity_names: List[str], output_fo
     sss = ''
     for ent in entity_names:
         ss = clone_table_from_file(input_folder, ent, output_folder)
+        sss += ss + '\n'
+    return sss
+
+
+def clone_views_from_file(input_folder: str, entity_names: List[str], output_folder: str = r'.\output'):
+    sss = ''
+    for ent in entity_names:
+        ss = clone_view_from_file(input_folder, ent, output_folder)
         sss += ss + '\n'
     return sss

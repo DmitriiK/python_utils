@@ -9,7 +9,7 @@ entity_name2 = nc.default_rename(entity_name)
 trg_table = nc.table_name(entity_name2)
 stg_tbl = nc.stg_table_name(entity_name)
 source_view_name = 'Symbol_FTTicker2Source_vw'
-
+output_dir = r'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases\DataFeedEngineMI'
 
 class TestSQL(unittest.TestCase):
 
@@ -31,21 +31,33 @@ class TestSQL(unittest.TestCase):
             print(ret)
 
     def test_generate_merge_sp(self):
-        with MetaDataRequester() as mdr:
-            spdef, spname = mdr.create_merge_sp(entity_name, entity_name2)
-            assert spdef, spname
-            print(spdef)
+        ents = ['Symbol_IBESTickerEnhanced',
+        'Symbol_TickerEnhanced',
+        'Symbol_CusipEnhanced',
+        'Symbol_FTCusip6Symbol',
+        'Symbol_FTCusip9Symbol',
+        'Symbol_FTISINSymbol',
+        'Symbol_ISINEnhanced',
+        'Symbol_SECCIKEnhanced',
+        'Symbol_SECCIKSymbol',
+        'Symbol_SedolEnhanced',
+        'Symbol_FTSEDOLSymbol',]
 
-            file_path = os.path.join(r'.\output', spname.split('.')[-1] + '.sql')
-            outo.output_to_file(file_path, spdef)
+        with MetaDataRequester() as mdr:
+            sps = ''
+            for entity_name in ents:
+                spdef, spname = mdr.create_merge_sp(entity_name, nc.default_rename(entity_name))
+                assert spdef, spname
+                sps += spdef +"\nGO\n"
+
+                outo.output_to_file(output_dir, "StoredProcedures", spname, spdef)
+            outo.output_to_clipboard(sps)
 
     def test_generate_pull_sp(self):
         with MetaDataRequester() as mdr:
             spdef, spname = mdr.create_pull_sp(entity_name, entity_name2, source_view_name=source_view_name)
             assert spdef, spname
-            print(spdef)
-            file_path = os.path.join(r'.\output', spname.split('.')[-1] + '.sql')
-            outo.output_to_file(file_path, spdef)
+            outo.output_to_file(output_dir, "StoredProcedures", spname, spdef)
 
     def test_generate_create_table_stm(self):
         with MetaDataRequester() as mdr:
