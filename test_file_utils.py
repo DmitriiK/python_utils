@@ -25,8 +25,6 @@ class TestFileProcessing(unittest.TestCase):
                 'Symbol_SECCIKSymbol',
                 'Symbol_SedolEnhanced',
                 'Symbol_FTSEDOLSymbol',]
-        sss = ''
-        for ent in ents:
-            ss = clone_tables_from_file(tables_dir, ent, output_tables_dir)
-            sss += ss
-        pyperclip.copy(sss)
+
+        ss = clone_tables_from_file(tables_dir, ents, output_tables_dir)
+        pyperclip.copy(ss)

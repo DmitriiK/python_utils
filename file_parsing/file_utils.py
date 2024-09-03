@@ -38,7 +38,7 @@ def rename_and_modify_sql_files(folder_path):
             os.remove(old_file_path)
 
 
-def replace_schema_or_table_name(sql: str, new_schema: str = None, new_table_name: str = None):
+def replace_schema_or_table_name(sql: str, new_schema: str = None, new_table_name: str = None, drop=False):
     create_table_pattern = r'CREATE\s+table\s+(.+\S)\s*\('
     pattern = re.compile(create_table_pattern, re.IGNORECASE + re.MULTILINE)
     match = pattern.search(sql)   
@@ -55,10 +55,12 @@ def replace_schema_or_table_name(sql: str, new_schema: str = None, new_table_nam
  
     new_table_name = new_table_name or table_name
     new_schema = new_schema or schema
-    new_table_name_full = f'{new_schema}.{new_table_name}'
+    new_table_name_full = f' {new_schema}.{new_table_name}'
 
-    tn_pattern = fr'(\[?{schema}\]?\.)?\[?{table_name}\]?'
+    tn_pattern = fr'\s(\[?{schema}\]?\.)?\[?{table_name}\]?'
     replaced = re.sub(tn_pattern, new_table_name_full, sql)
+    if drop:
+        replaced = f'\nDROP TABLE IF EXISTS {new_table_name_full}; \nGO\n' + replaced
     return replaced
 
 
@@ -74,17 +76,20 @@ def clone_table_from_file(input_folder: str, entity_name: str, output_folder: st
     stms = ''
     for new_sch, tn in [('stg', table_name), (None, table_name2)]:
         new_table_def = replace_schema_or_table_name(table_def, new_sch, tn)
-        stms += new_table_def +'\n GO'
+        stms += new_table_def +'\n GO '
         new_file_name = os.path.join(output_folder, new_sch or 'dbo', 'Tables', f'{tn}.sql')
         print(f'writing to {new_file_name}')
         with open(new_file_name, 'w') as wf:
             wf.write(new_table_def)
     return stms
 
+
 """For batch creation"""
+
+
 def clone_tables_from_file(input_folder: str, entity_names: List[str], output_folder: str = r'.\output'):
     sss = ''
     for ent in entity_names:
         ss = clone_table_from_file(input_folder, ent, output_folder)
-        sss += ss
+        sss += ss + '\n'
     return sss
