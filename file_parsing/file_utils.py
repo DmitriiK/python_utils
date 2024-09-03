@@ -2,6 +2,7 @@ import os
 import re
 from typing import List
 import sql.naming_convention as nc
+from sql.output_to import output_to_file
 
 
 def find_file(root_folder, filename):
@@ -76,11 +77,9 @@ def clone_table_from_file(input_folder: str, entity_name: str, output_folder: st
     stms = ''
     for new_sch, tn in [('stg', table_name), (None, table_name2)]:
         new_table_def = replace_schema_or_table_name(table_def, new_sch, tn)
-        stms += new_table_def +'\n GO '
-        new_file_name = os.path.join(output_folder, new_sch or 'dbo', 'Tables', f'{tn}.sql')
-        print(f'writing to {new_file_name}')
-        with open(new_file_name, 'w') as wf:
-            wf.write(new_table_def)
+        stms += new_table_def + '\n GO '
+        new_obj_name = (new_sch or 'dbo') + '.' + tn
+        output_to_file(output_folder, "Tables", new_obj_name, new_table_def)
     return stms
 
 
