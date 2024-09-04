@@ -105,6 +105,7 @@ def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str
     new_view_def = nc.SnapshotReplace(view_def)
     new_view_def = new_view_def.replace(view_name, view_name2) + '\nGO\n'
     output_to_file(output_folder, "Views", view_name2, new_view_def)
+    print(view_name2)
     return new_view_def
 
 

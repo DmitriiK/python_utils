@@ -19,4 +19,5 @@ def output_to_file(output_folder: str, object_type: str, object_name: str, objec
 
 def output_to_clipboard(object_def: str):
     pyperclip.copy(object_def)
+    print(f'string like "{object_def[0:50]}... " with len {len(object_def)} has been copied to clipboard')
 

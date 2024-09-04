@@ -56,7 +56,7 @@ MERGE_SP = """CREATE {or_alter}PROCEDURE {sp_name}
       {merge_stm}
   END"""
 
-PULL_SP = """"CREATE  {or_alter}  PROCEDURE {sp_name}
+PULL_SP = """CREATE  {or_alter}  PROCEDURE {sp_name}
 AS
 BEGIN
     TRUNCATE TABLE  {table_name}
