@@ -41,10 +41,6 @@ def fix_shit(entity_name):
     return remove_second_occurrence(entity_name, 'Symbol')
 
 
-def SnapshotReplace(x):
-    return x.replace('CIQDataSnapshot.', 'CIQData.')
-
-
 # renaming patterns for making of clones of some specific tables
 def trans_ft_rename(x):
     return x.replace('Transaction', 'Transaction2')

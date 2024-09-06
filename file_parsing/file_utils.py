@@ -1,7 +1,9 @@
 import os
 import re
 from typing import List
+
 import sql.naming_convention as nc
+from sql.code_transformations import src_view_mapp, apply_mappings, apply_or_alter
 from sql.output_to import output_to_file
 
 
@@ -88,10 +90,11 @@ def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str
     view_name = view_name.split('.')[-1]  # to eliminate schema name
     view_name2 = nc.source_view_name(nc.default_rename(entity_name)).split('.')[-1]
     file_path = find_file(root_folder=input_folder, filename=f'{view_name}.sql')
-
+    altenative_view_name = None
     if not file_path:
-        print(f'file for view {view_name} was not found! trying to apply antoher pattern')
-        file_path = find_file(root_folder=input_folder, filename=f'{nc.fix_shit(view_name)}.sql')
+        altenative_view_name = nc.fix_shit(view_name)
+        print(f'file for view {view_name} was not found! trying to find {altenative_view_name}')
+        file_path = find_file(root_folder=input_folder, filename=f'{altenative_view_name}.sql')
 
     if not file_path:
         print(f'file for view {view_name} was not found! creationg some stub for manual creation')
@@ -102,8 +105,10 @@ def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str
         with open(file_path, 'r', encoding='utf-8-sig') as f:  # without encoding byt order mark ï»¿ might happen
             view_def = f.read()
 
-    new_view_def = nc.SnapshotReplace(view_def)
-    new_view_def = new_view_def.replace(view_name, view_name2) + '\nGO\n'
+    new_view_def = apply_mappings(view_def, src_view_mapp)
+
+    new_view_def = apply_or_alter(new_view_def)
+    new_view_def = new_view_def.replace(altenative_view_name or view_name, view_name2) + '\nGO\n'
     output_to_file(output_folder, "Views", view_name2, new_view_def)
     print(view_name2)
     return new_view_def

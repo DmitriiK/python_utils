@@ -25,7 +25,7 @@ class TestFileProcessing(unittest.TestCase):
         clone_table_from_file(tables_dir, entity_name, output_dir)
 
     def test_clone_view_from_files(self):
-        entity_name = 'Symbol_IBESTickerEnhanced'
+        entity_name = 'Symbol_FTCusip6Symbol'
         clone_view_from_file(tables_dir, entity_name, output_dir)
 
     def test_clone_tables_from_files(self):
