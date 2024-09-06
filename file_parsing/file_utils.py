@@ -3,7 +3,7 @@ import re
 from typing import List
 
 import sql.naming_convention as nc
-from sql.code_transformations import src_view_mapp, apply_mappings, apply_or_alter
+from sql.code_transformations import src_view_mapp, apply_mappings, apply_or_alter, apply_sql_formating
 from sql.output_to import output_to_file
 
 
@@ -108,6 +108,7 @@ def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str
     new_view_def = apply_mappings(view_def, src_view_mapp)
 
     new_view_def = apply_or_alter(new_view_def)
+    new_view_def = apply_sql_formating(new_view_def)
     new_view_def = new_view_def.replace(altenative_view_name or view_name, view_name2) + '\nGO\n'
     output_to_file(output_folder, "Views", view_name2, new_view_def)
     print(view_name2)

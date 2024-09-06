@@ -1,6 +1,8 @@
 from typing import List, Tuple
 import re
 
+import sqlparse
+
 src_view_mapp = [(r'\[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany_tbl\]?', 
                    'dbo.Universe_Company2_tbl'),
                  (r'\bCIQDataSnapshot\.',
@@ -21,6 +23,10 @@ def apply_or_alter(script: str):
         pattern = re.compile(r'\bCREATE ', re.IGNORECASE)
         return re.sub(pattern, cral, script)
     return script
+
+
+def apply_sql_formating(script: str):
+    return sqlparse.format(script, reindent=True, keyword_case='upper')
 
 
 def test_mapping():
