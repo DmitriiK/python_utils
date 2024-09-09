@@ -3,7 +3,7 @@ from typing import List
 import logging
 from collections import namedtuple
 
-from sql.config import SQL_SERVER, DB_NAME
+from sql.config import CONN_STR
 from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, PULL_SP, or_alter
 import sql.naming_convention as nc
 
@@ -22,16 +22,9 @@ ColumnInfo = namedtuple('ColumnInfo', ['column_name',
                                        ])
 
 
-class MetaDataRequester:
+class SQL_Communicator:
     def __enter__(self):
-        self.conn_str = (
-            f'DRIVER={{ODBC Driver 17 for SQL Server}};'
-            f'SERVER={SQL_SERVER};'
-            f'DATABASE={DB_NAME};'
-            f'Trusted_Connection=yes;'
-            f'Encrypt=yes;'
-            f'TrustServerCertificate=yes;'
-        )
+        self.conn_str = CONN_STR
         logging.info(self.conn_str)
         print('connecting...')
         self.connection = pyodbc.connect(self.conn_str, timeout=60)

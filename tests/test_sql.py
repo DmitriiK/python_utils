@@ -1,6 +1,6 @@
 import unittest
 import os
-from sql.sql_requests import MetaDataRequester
+from sql.sql_requests import SQL_Communicator
 import sql.naming_convention as nc
 import sql.output_to as outo
 
@@ -42,23 +42,23 @@ class TestSQL(unittest.TestCase):
 
     # @unittest.skip('tested already')
     def test_connect(self):
-        with MetaDataRequester() as mdr:
+        with SQL_Communicator() as mdr:
             assert not mdr.connection.closed
 
     def test_get_columns(self):
-        with MetaDataRequester() as mdr:
+        with SQL_Communicator() as mdr:
             ret = mdr.get_columns(table_name=trg_table)
             assert ret
             print(ret)
 
     def test_generate_merge_stm(self):
-        with MetaDataRequester() as mdr:
+        with SQL_Communicator() as mdr:
             ret = mdr.generate_merge_stm(tbl_srs=stg_tbl, tbl_dst=trg_table)
             assert ret
             print(ret)
 
     def test_generate_merge_sp(self):
-        with MetaDataRequester() as mdr:
+        with SQL_Communicator() as mdr:
             sps = ''
             for entity_name in ents:
                 spdef, spname = mdr.create_merge_sp(entity_name, nc.default_rename(entity_name))
@@ -69,7 +69,7 @@ class TestSQL(unittest.TestCase):
             outo.output_to_clipboard(sps)
 
     def test_generate_pull_sp(self):
-        with MetaDataRequester() as mdr:
+        with SQL_Communicator() as mdr:
             sps = ''
             for entity_name, source_view_name in zip(ents, source_views):
                 # source_view_name, source_view_name = nc.source_view_name(entity_name)
@@ -80,7 +80,7 @@ class TestSQL(unittest.TestCase):
             outo.output_to_clipboard(sps)
 
     def test_generate_create_table_stm(self):
-        with MetaDataRequester() as mdr:
+        with SQL_Communicator() as mdr:
             ret = mdr.get_table_script(nc.table_name(entity_name))
             assert ret
             print(ret)
