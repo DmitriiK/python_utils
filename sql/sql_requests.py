@@ -2,6 +2,7 @@ import pyodbc
 from typing import List
 import logging
 from collections import namedtuple
+from datetime import datetime
 
 from sql.config import CONN_STR
 from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, PULL_SP, or_alter
@@ -30,6 +31,13 @@ class SQL_Communicator:
         self.connection = pyodbc.connect(self.conn_str, timeout=60)
         print("Connection successful!")
         return self
+
+    def get_execution_metrics(self, stm: str):
+        tm0 = datetime.now()
+        cursor = self.connection.cursor()   
+        cursor.execute(stm)
+        time_dif = datetime.now() - tm0
+        return time_dif
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         self.connection.close()
