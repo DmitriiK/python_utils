@@ -37,6 +37,10 @@ def source_view_name(entity_name):
     return f'dbo.{entity_name}Source_vw'
 
 
+def view_name(entity_name):
+    return f'dbo.{entity_name}_vw'
+
+
 def fix_shit(entity_name):
     return remove_second_occurrence(entity_name, 'Symbol')
 

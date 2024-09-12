@@ -5,7 +5,7 @@ from typing import List
 import sql.naming_convention as nc
 from sql.code_transformations import src_view_mapp, apply_mappings, apply_or_alter, apply_sql_formating
 from sql.output_to import output_to_file
-
+SQL_GO = "\nGO\n"
 
 def find_file(root_folder, filename):
     for dirpath, dirnames, filenames in os.walk(root_folder):
@@ -63,7 +63,7 @@ def replace_schema_or_table_name(sql: str, new_schema: str = None, new_table_nam
     tn_pattern = fr'\s(\[?{schema}\]?\.)?\[?{table_name}\]?'
     replaced = re.sub(tn_pattern, new_table_name_full, sql)
     if drop:
-        replaced = f'\nDROP TABLE IF EXISTS {new_table_name_full}; \nGO\n' + replaced
+        replaced = f'\nDROP TABLE IF EXISTS {new_table_name_full}; {SQL_GO}' + replaced
     return replaced
 
 
@@ -78,17 +78,19 @@ def clone_table_from_file(input_folder: str, entity_name: str, output_folder: st
 
     stms = ''
     for new_sch, tn in [('stg', table_name), (None, table_name2)]:
-        new_table_def = replace_schema_or_table_name(table_def, new_sch, tn)
-        stms += new_table_def + '\n GO '
+        new_table_def = replace_schema_or_table_name(table_def, new_sch, tn, True)
+        stms += new_table_def + SQL_GO
         new_obj_name = (new_sch or 'dbo') + '.' + tn
         output_to_file(output_folder, "Tables", new_obj_name, new_table_def)
     return stms
 
 
-def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str = r'.\output'):
-    view_name = nc.source_view_name(entity_name)
+def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str = r'.\output', 
+                         nc_view_name: callable = nc.source_view_name):
+    nc_view_name = nc_view_name or nc.view_name  # default nameing conv for view name                    
+    view_name = nc_view_name(entity_name)
     view_name = view_name.split('.')[-1]  # to eliminate schema name
-    view_name2 = nc.source_view_name(nc.default_rename(entity_name)).split('.')[-1]
+    view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
     file_path = find_file(root_folder=input_folder, filename=f'{view_name}.sql')
     altenative_view_name = None
     if not file_path:
@@ -128,9 +130,10 @@ def clone_tables_from_file(input_folder: str, entity_names: List[str], output_fo
     return sss
 
 
-def clone_views_from_file(input_folder: str, entity_names: List[str], output_folder: str = r'.\output'):
+def clone_views_from_file(input_folder: str, entity_names: List[str], output_folder: str = r'.\output'
+                          ,nc_view_name=None):
     sss = ''
     for ent in entity_names:
-        ss = clone_view_from_file(input_folder, ent, output_folder)
+        ss = clone_view_from_file(input_folder, ent, output_folder, nc_view_name)
         sss += ss + '\n'
     return sss

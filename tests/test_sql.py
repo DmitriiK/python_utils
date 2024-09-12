@@ -11,31 +11,32 @@ stg_tbl = nc.stg_table_name(entity_name)
 source_view_name = 'Symbol_FTTicker2Source_vw'
 output_dir = r'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases\DataFeedEngineMI'
 
-ents = ['Symbol_IBESTickerEnhanced',
-        'Symbol_TickerEnhanced',
-        'Symbol_CusipEnhanced',
-        'Symbol_FTCusip6Symbol',
-        'Symbol_FTCusip9Symbol',
-        'Symbol_FTISINSymbol',
-        'Symbol_ISINEnhanced',
-        'Symbol_SECCIKEnhanced',
-        'Symbol_SECCIKSymbol',
-        'Symbol_SedolEnhanced',
-        'Symbol_FTSEDOLSymbol',]
+ents = [  
+    'GICS_GICS',
+    'Symbol_GVKeySymbol',
+    'Symbol_GVKeyEnhanced',
+    'Symbol_DandBSymbol',
+    'KeyDev_FutureEvent',
+    'KeyDev_FutureEventToObjectToEventType',
+    'FutureEventMkt_FutureEventMkt',
+    'FutureEventMkt_FutureEventMktSplitInfo',
+    'FutureEventMkt_FutureEventMktToObjectToEventType'  
+    ]
 
-source_views = [
-    "Symbol_IBESTickerEnhanced2Source_vw",
-    "Symbol_TickerEnhanced2Source_vw",
-    "Symbol_CusipEnhanced2Source_vw",
-    "Symbol_FTCusip6Symbol2Source_vw",
-    "Symbol_FTCusip9Symbol2Source_vw",
-    "Symbol_FTISINSymbol2Source_vw",
-    "Symbol_ISINEnhanced2Source_vw",    
-    "Symbol_SECCIKEnhanced2Source_vw",
-    "Symbol_SECCIKSymbol2Source_vw",
-    "Symbol_SedolEnhanced2Source_vw",
-    "Symbol_FTSEDOLSymbol2Source_vw",
-] 
+src_views_ents = [    # for views have to create another set of names due to naming inconsistencies
+    'GICS_GICS',
+    'Symbol_GVKey',
+    'Symbol_GVKeyEnhanced',
+    'Symbol_DandB',
+    'KeyDev_FutureEvent',
+    'KeyDev_FutureEventToObjectToEventType',
+    'KeyDev_FutureEventMkt',
+    'KeyDev_FutureEventMktSplitInfo',
+    'KeyDev_FutureEventMktToObjectToEventType'  
+    ]   
+
+
+source_views = [nc.source_view_name(x) for x in src_views_ents] 
 
 
 class TestSQL(unittest.TestCase):
