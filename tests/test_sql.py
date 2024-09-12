@@ -3,40 +3,23 @@ import os
 from sql.sql_requests import SQL_Communicator
 import sql.naming_convention as nc
 import sql.output_to as outo
+from configs.lauch_config import load_launch_config
 
 entity_name = 'Symbol_FTTickerSymbol' # 'Symbol_IBESTickerEnhanced'
 entity_name2 = nc.default_rename(entity_name)
 trg_table = nc.table_name(entity_name2)
 stg_tbl = nc.stg_table_name(entity_name)
 source_view_name = 'Symbol_FTTicker2Source_vw'
-output_dir = r'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases\DataFeedEngineMI'
-
-ents = [  
-    'GICS_GICS',
-    'Symbol_GVKeySymbol',
-    'Symbol_GVKeyEnhanced',
-    'Symbol_DandBSymbol',
-    'KeyDev_FutureEvent',
-    'KeyDev_FutureEventToObjectToEventType',
-    'FutureEventMkt_FutureEventMkt',
-    'FutureEventMkt_FutureEventMktSplitInfo',
-    'FutureEventMkt_FutureEventMktToObjectToEventType'  
-    ]
-
-src_views_ents = [    # for views have to create another set of names due to naming inconsistencies
-    'GICS_GICS',
-    'Symbol_GVKey',
-    'Symbol_GVKeyEnhanced',
-    'Symbol_DandB',
-    'KeyDev_FutureEvent',
-    'KeyDev_FutureEventToObjectToEventType',
-    'KeyDev_FutureEventMkt',
-    'KeyDev_FutureEventMktSplitInfo',
-    'KeyDev_FutureEventMktToObjectToEventType'  
-    ]   
 
 
-source_views = [nc.source_view_name(x) for x in src_views_ents] 
+launch_config_file = r'configs\launch_configs\test_config.yml'
+lc = load_launch_config(launch_config_file)
+output_dir = lc.output_folder
+
+ents = lc.entities
+src_views_ents = lc.src_views_ents
+
+source_views = [nc.source_view_name(nc.default_rename(x)) for x in src_views_ents] 
 
 
 class TestSQL(unittest.TestCase):
