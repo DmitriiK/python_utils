@@ -10,7 +10,7 @@ entities:
   - KeyDev_FutureEventToObjectToEventType
   - FutureEventMkt_FutureEventMkt
   - FutureEventMkt_FutureEventMktSplitInfo
-  - FutureEventMkt_FutureEventMktToObjectToEventType
+  - FutureEventMkt_FutureEventMktToObjectToEventType  
 
 src_views_ents:  # for views have to create another set of names due to naming inconsistencies
   - GICS_GICS 
@@ -22,5 +22,9 @@ src_views_ents:  # for views have to create another set of names due to naming i
   - KeyDev_FutureEventMkt
   - KeyDev_FutureEventMktSplitInfo
   - KeyDev_FutureEventMktToObjectToEventType
-
+stages:
+  - CLONE_TABLE
+  - CLONE_VIEW
+  - CREATE_PULL_SP
+  - CREATE_MERGE_SP
 

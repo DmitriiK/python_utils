@@ -8,6 +8,7 @@ class LaunchConfig(BaseModel):
     output_folder: str = Field(None, description="output folder for newly created scripts")
     entities: List[str] = Field(None, description="list of entitites to process with pipeline")
     src_views_ents: List[str] = Field(None, description="list of entitites for views to process with pipeline")
+    stages: List[str] = Field(None, description="steps of execution")
 
 
 def load_launch_config(file_path: str) -> LaunchConfig:
