@@ -5,7 +5,9 @@ from typing import List
 import sql.naming_convention as nc
 from sql.code_transformations import src_view_mapp, apply_mappings, apply_or_alter, apply_sql_formating
 from sql.output_to import output_to_file
+
 SQL_GO = "\nGO\n"
+
 
 def find_file(root_folder, filename):
     for dirpath, dirnames, filenames in os.walk(root_folder):

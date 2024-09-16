@@ -2,9 +2,9 @@ import argparse
 import logging
 import pyperclip
 
-from file_parsing.file_utils import clone_table_from_file, clone_tables_from_file, clone_view_from_file, clone_views_from_file
-
 from configs.lauch_config import load_launch_config, LaunchConfig
+from file_parsing.file_utils import clone_table_from_file, clone_tables_from_file, clone_view_from_file
+
 
 # Initialize parser
 parser = argparse.ArgumentParser()

@@ -22,9 +22,19 @@ src_views_ents:  # for views have to create another set of names due to naming i
   - KeyDev_FutureEventMkt
   - KeyDev_FutureEventMktSplitInfo
   - KeyDev_FutureEventMktToObjectToEventType
+
 stages:
   - CLONE_TABLE
   - CLONE_VIEW
   - CREATE_PULL_SP
   - CREATE_MERGE_SP
+
+code_replacements:
+- re_replace_this: r"[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany_tbl\]"
+  replace_to: "dbo.Universe_Company2_tbl"
+- re_replace_this: r"\bCIQDataSnapshot\."
+  replace_to: "CIQData"
+
+
+
 
