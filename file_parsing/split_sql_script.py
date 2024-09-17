@@ -1,6 +1,7 @@
 import os
 import re
 
+
 def split_sql_file(input_file, output_folder):
     with open(input_file, 'r') as file:
         content = file.read()
@@ -29,8 +30,7 @@ def split_sql_file(input_file, output_folder):
                 out_file.write(statement)
 
 
-
-# Example usage
-file_name = r'C:\Users\dmitrii_kalmanovich\Documents\SQL Server Management Studio\transactions_stuff.sql'
-output_folder = r'output\split_output'
-split_sql_file(file_name, output_folder)
+def test_spit():
+    file_name = r'C:\Users\dmitrii_kalmanovich\Documents\SQL Server Management Studio\transactions_stuff.sql'
+    output_folder = r'output\split_output'
+    split_sql_file(file_name, output_folder)

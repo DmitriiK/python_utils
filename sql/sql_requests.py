@@ -2,13 +2,14 @@ import pyodbc
 from typing import List
 import logging
 from collections import namedtuple
+from enum import Enum
 from datetime import datetime
 
 from sql.config import CONN_STR
 from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, PULL_SP, or_alter
 import sql.naming_convention as nc
 from sql.code_transformations import apply_sql_formating
-
+import sql.output_to as outo
 
 ColumnInfo = namedtuple('ColumnInfo', ['column_name',
                                        'data_type',
@@ -22,6 +23,11 @@ ColumnInfo = namedtuple('ColumnInfo', ['column_name',
                                        'check_constr',
                                        'is_in_pk'
                                        ])
+
+
+class SP_Category(Enum):
+    PULL_SP = 1
+    MERGE_SP = 2
 
 
 class SQL_Communicator:
@@ -188,3 +194,20 @@ class SQL_Communicator:
             create_script += f"CREATE {index_def['type']} [{index_name}] ON [{schema}].[{table_name}] ({columns});\n"
         
         return create_script
+
+    def create_sps(self, sp_cat: SP_Category, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None):  
+        sps = ''
+        source_views = [nc.source_view_name(nc.default_rename(x)) for x in src_views_ents] 
+        zz = zip(ents, source_views) if source_views else ents
+        for tp in zz:
+            # source_view_name, source_view_name = nc.source_view_name(entity_name)
+            entity_name = tp[0] if source_views else tp
+            source_view_name = tp[1] if source_views else None
+            if sp_cat == SP_Category.PULL_SP:
+                spdef, spname = self.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
+            else:
+                spdef, spname = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
+            sps += spdef + '\nGO\n'
+            if output_dir:
+                outo.output_to_file(output_dir, "StoredProcedures", spname, spdef)
+        return sps
