@@ -3,8 +3,7 @@ import logging
 import pyperclip
 
 from configs.lauch_config import load_launch_config, LaunchConfig
-from file_parsing.file_utils import clone_table_from_file, clone_tables_from_file, clone_view_from_file
-
+from file_parsing.file_utils import clone_tables_from_file, clone_views_from_file
 
 # Initialize parser
 parser = argparse.ArgumentParser()
@@ -29,7 +28,7 @@ else:
     if args.src_views_ents:
         cfg.src_views_ents = args.src_views_ents.split(',')
 logging.info(cfg)
-ss = '' # string with sql script to copy to clipboard
+ss = ''  # string with sql script to copy to clipboard
 for step in cfg.stages:
     match step:
         case 'CLONE_TABLE':
@@ -37,7 +36,11 @@ for step in cfg.stages:
             ss += sss
 
         case 'CLONE_VIEW':
-            ss = clone_views_from_file(cfg.input_folder, cfg.src_views_ents or cfg.entities, cfg.output_folder, ) # nc_view_name=nc.source_view_name to do configuration
+            ss = clone_views_from_file(input_folder=cfg.input_folder,
+                                       entity_names=cfg.src_views_ents or cfg.entities,
+                                       output_folder=cfg.output_folder,
+                                       rppts=cfg.code_replacements) 
+            #  nc_view_name=nc.source_view_name to do configuration
             ss += sss
         case 'CREATE_PULL_SP':
             pass 

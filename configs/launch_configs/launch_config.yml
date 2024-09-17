@@ -30,10 +30,14 @@ stages:
   - CREATE_MERGE_SP
 
 code_replacements:
-- re_replace_this: r"[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany_tbl\]"
-  replace_to: "dbo.Universe_Company2_tbl"
-- re_replace_this: r"\bCIQDataSnapshot\."
-  replace_to: "CIQData"
+- re_replace_this: \[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany_tbl\]?
+  replace_to: dbo.Universe_Company2_tbl
+- re_replace_this: \bCIQDataSnapshot\.
+  replace_to: CIQData
+- re_replace_this: \bCREATE\s+VIEW\s
+  replace_to: "CREATE or ALTER VIEW "
+
+
 
 
 

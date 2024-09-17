@@ -10,7 +10,7 @@
             "request": "launch",
             "console": "integratedTerminal",
             "program": "${workspaceFolder}/main.py",
-            "args": ["--launch_config_path",  "configs\\launch_configs\\test_config.yml", ]
+            "args": ["--launch_config_path",  "configs\\launch_configs\\launch_config.yml", ]
         }
     ]
 }

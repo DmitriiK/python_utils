@@ -3,8 +3,9 @@ import re
 from typing import List
 
 import sql.naming_convention as nc
-from sql.code_transformations import src_view_mapp, apply_mappings, apply_or_alter, apply_sql_formating
+from sql.code_transformations import apply_mappings, apply_sql_formating
 from sql.output_to import output_to_file
+from configs.lauch_config import ReplacementPattern 
 
 SQL_GO = "\nGO\n"
 
@@ -87,8 +88,9 @@ def clone_table_from_file(input_folder: str, entity_name: str, output_folder: st
     return stms
 
 
-def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str = r'.\output', 
-                         nc_view_name: callable = nc.source_view_name):
+def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str = r'.\output',
+                         nc_view_name: callable = nc.source_view_name,
+                         rppts: List[ReplacementPattern] = None):
     nc_view_name = nc_view_name or nc.view_name  # default nameing conv for view name                    
     view_name = nc_view_name(entity_name)
     view_name = view_name.split('.')[-1]  # to eliminate schema name
@@ -109,9 +111,7 @@ def clone_view_from_file(input_folder: str, entity_name: str, output_folder: str
         with open(file_path, 'r', encoding='utf-8-sig') as f:  # without encoding byt order mark ï»¿ might happen
             view_def = f.read()
 
-    new_view_def = apply_mappings(view_def, src_view_mapp)
-
-    new_view_def = apply_or_alter(new_view_def)
+    new_view_def = apply_mappings(view_def, rppts)  # applying some code replacemements, defined in congigs
     new_view_def = apply_sql_formating(new_view_def)
     new_view_def = new_view_def.replace(altenative_view_name or view_name, view_name2) + '\nGO\n'
     output_to_file(output_folder, "Views", view_name2, new_view_def)
@@ -132,10 +132,14 @@ def clone_tables_from_file(input_folder: str, entity_names: List[str], output_fo
     return sss
 
 
-def clone_views_from_file(input_folder: str, entity_names: List[str], output_folder: str = r'.\output'
-                          ,nc_view_name=None):
+def clone_views_from_file(input_folder: str, entity_names: List[str], output_folder: str = r'.\output',
+                          nc_view_name=None,
+                          rppts: List[ReplacementPattern] = None):
     sss = ''
     for ent in entity_names:
-        ss = clone_view_from_file(input_folder, ent, output_folder, nc_view_name)
+        ss = clone_view_from_file(input_folder=input_folder,
+                                  entity_name=ent,
+                                  output_folder=output_folder,
+                                  rppts=rppts) 
         sss += ss + '\n'
     return sss

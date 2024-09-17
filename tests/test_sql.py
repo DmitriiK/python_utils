@@ -12,7 +12,7 @@ stg_tbl = nc.stg_table_name(entity_name)
 source_view_name = 'Symbol_FTTicker2Source_vw'
 
 
-launch_config_file = r'configs\launch_configs\test_config.yml'
+launch_config_file = r'configs\launch_configs\launch_config.yml'
 lc = load_launch_config(launch_config_file)
 output_dir = lc.output_folder
 
