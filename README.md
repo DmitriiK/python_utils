@@ -28,8 +28,10 @@ Parameters, that supposed to be changed each launch, are configured in [yaml fil
 Example of such file:
 ```yml
 
-input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeedEngineMI2\dbo' # folder inside Visual Studio database projects
-output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases\DataFeedEngineMI' # folder to save resulting script, that supposed to be commited to git repo later and be a part of implementation plan
+input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeedEngineMI2\dbo'
+# folder inside Visual Studio database projects
+output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases\DataFeedEngineMI'
+# folder to save resulting script, that supposed to be commited to git repo later and be a part of implementation plan
 
 entities:
   - GICS_GICS
