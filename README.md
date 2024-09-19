@@ -63,5 +63,8 @@ code_replacements: # regex patterns we are going to apply when cloning the views
 
 Naming conventions, as they do not change frequently, are hardcoded [inside python module](sql/naming_convention.py). Also, you need to write the proper SQL connection string here [config file](sql/config.py).
 
-### Launching
-The main entry point is [main.py](main.py) module. It can either take parameters from the yaml config or from command line arguments. For dev testing, we can use a set of tests inside the [tests](tests) folder. For performance tests, we can use [test_flow.ipynb](test_flow.ipynb) notebook.
+### Launching and testing
+The main entry point is [main.py](main.py) module. It can either take parameters from the yaml config or from command line arguments. 
+For dev testing, we can use a set of tests inside the [tests](tests) folder. For performance tests, we can use [test_flow.ipynb](test_flow.ipynb) notebook.
+![image](https://github.com/user-attachments/assets/bbf746b1-e22a-491b-8ec1-bd83ef79063f)
+
