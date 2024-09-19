@@ -1,5 +1,8 @@
 import unittest
 import os
+
+import pyperclip
+
 from sql.sql_requests import SQL_Communicator
 import sql.naming_convention as nc
 import sql.output_to as outo
@@ -68,6 +71,15 @@ class TestSQL(unittest.TestCase):
             ret = mdr.get_table_script(nc.table_name(entity_name))
             assert ret
             print(ret)
+
+    def test_clone_view(self):
+        entity_name = 'KeyDev_FutureEvent'
+        with SQL_Communicator() as mdr:
+            ret = mdr.clone_view(entity_name)
+            assert ret
+            print(ret)
+            pyperclip.copy(ret[0])
+
 
     def test_to_file(self):
         spdef, object_type, spname = "create table xxx ()", 'Table', 'dbo.xx_tbl'

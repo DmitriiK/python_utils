@@ -6,9 +6,10 @@ from enum import Enum
 from datetime import datetime
 
 from sql.config import CONN_STR
+from configs.lauch_config import ReplacementPattern
 from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, PULL_SP, or_alter
 import sql.naming_convention as nc
-from sql.code_transformations import apply_sql_formating
+from sql.code_transformations import apply_mappings, apply_sql_formating
 import sql.output_to as outo
 
 ColumnInfo = namedtuple('ColumnInfo', ['column_name',
@@ -75,6 +76,38 @@ class SQL_Communicator:
             raise Exception(ex_mess)
 
         return columns
+
+    def get_sp_helptext(self, object_name):
+        """
+        Gets the definition of a SQL Server view or stored procedure.        
+        Args:
+            cursor (pyodbc.Cursor): The database cursor.
+            object_name (str): The name of the view or stored procedure.            
+        Returns:
+            str: The definition of the view or stored procedure.
+        """
+        conn = self.connection
+        cursor = conn.cursor()
+        cursor.execute(f"EXEC sp_helptext '{object_name}'")
+        rows = cursor.fetchall()
+        cursor.close()
+        definition = '\n'.join([row[0] for row in rows])        
+        return definition
+
+    def clone_view(self, entity_name: str, 
+                   nc_view_name: callable = nc.source_view_name,
+                   rppts: List[ReplacementPattern] = None):
+        nc_view_name = nc_view_name or nc.view_name  # default naming conv for view name                    
+        view_name = nc_view_name(entity_name)
+        view_name = view_name.split('.')[-1]  # to eliminate schema name
+        view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
+
+        view_def = self.get_sp_helptext(view_name)
+        if rppts:
+            view_def = apply_mappings(view_def, rppts)  # applying some code replacemements, defined in congigs
+        view_def = apply_sql_formating(view_def)
+        view_def = view_def.replace(view_name, view_name2) + '\nGO\n'
+        return view_def, view_name2
 
     def generate_merge_stm(self, tbl_srs: str, tbl_dst: str) -> str:
         cols = self.get_columns(table_name=tbl_dst)
