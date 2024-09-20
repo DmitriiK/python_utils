@@ -66,9 +66,9 @@ class TestSQL(unittest.TestCase):
                 outo.output_to_file(output_dir, "StoredProcedures", spname, spdef)
             outo.output_to_clipboard(sps)
 
-    def test_generate_create_table_stm(self):
+    def test_create_table_stm(self):
         with SQL_Communicator() as mdr:
-            ret = mdr.get_table_script(nc.table_name(entity_name))
+            ret = mdr.get_table_definition(nc.table_name(entity_name))
             assert ret
             print(ret)
 

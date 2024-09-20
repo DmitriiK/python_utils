@@ -154,104 +154,112 @@ class SQL_Communicator:
         create_sp_stm = apply_sql_formating(create_sp_stm)                              
         return create_sp_stm, sp_name
 
-    def get_table_script(self, table_name):
-        cursor = self.connection.cursor()
-        ts = table_name.split('.')
-        if len(ts) > 1:
-            table_name = ts[1].strip('[]')
-            schema = ts[0].strip('[]')
+
+    def get_table_definition(self, table_name):
+        sntn = table_name.split('.')
+        if len(sntn) > 1:
+            schema_name, table_name = sntn[0], sntn[1]
         else:
-            table_name = ts[0].strip('[]')
-            schema = 'dbo'
-        # Get the table creation script.
-        cursor.execute(f'''
-            SELECT c.*
-            FROM INFORMATION_SCHEMA.TABLES AS t
-            INNER JOIN INFORMATION_SCHEMA.COLUMNS AS c
-            ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME
-            WHERE t.TABLE_TYPE = 'BASE TABLE'
-            AND t.TABLE_SCHEMA = '{schema}'
-            AND t.TABLE_NAME = '{table_name}'
-            ORDER BY c.ORDINAL_POSITION
-        ''')
-        
-        columns = cursor.fetchall()
-        
-        col_definitions = []
-        for col in columns:
-            col_definition = f"[{col.COLUMN_NAME}] {col.COLUMN_TYPE}"
-            if col.IS_NULLABLE == 'NO':
-                col_definition += " NOT NULL"
-            if col.COLUMN_DEFAULT:
-                col_definition += f" DEFAULT {col.COLUMN_DEFAULT}"
-            col_definitions.append(col_definition)
+            schema_name, table_name = 'dbo', sntn[0]
 
-        create_script = f"CREATE TABLE [{schema}].[{table_name}] (\n    " + ",\n    ".join(col_definitions) + "\n);\n"
+        column_query = f"""
+            SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
+        """
 
-        # Get the primary key constraints
-        cursor.execute(f'''
-            SELECT column_name
+        pk_query = f"""
+            SELECT COLUMN_NAME
             FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-            WHERE TABLE_SCHEMA = '{schema}'
-            AND TABLE_NAME = '{table_name}'
-            AND CONSTRAINT_NAME LIKE 'PK_%'
-        ''')
-        
-        primary_keys = cursor.fetchall()
-        if primary_keys:
-            pk_columns = ", ".join(f"[{pk.column_name}]" for pk in primary_keys)
-            create_script += f"ALTER TABLE [{schema}].[{table_name}] ADD PRIMARY KEY ({pk_columns});\n"
-        
-        # Get the indexes
-        cursor.execute(f'''
-            SELECT i.name AS IndexName, i.is_unique, c.name AS ColumnName
-            FROM sys.indexes AS i
-            INNER JOIN sys.index_columns AS ic
-            ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-            INNER JOIN sys.columns AS c
-            ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-            INNER JOIN sys.tables AS t
-            ON t.object_id = i.object_id
-            WHERE t.name = '{table_name}'
-        ''')
-        
-        indexes = cursor.fetchall()
-        index_definitions = {}
-        for index in indexes:
-            if index.IndexName not in index_definitions:
-                index_type = "UNIQUE INDEX" if index.is_unique else "INDEX"
-                index_definitions[index.IndexName] = {
-                    "type" : index_type,
-                    "columns" : []
-                }
-            index_definitions[index.IndexName]["columns"].append(index.ColumnName)
-        
-        for index_name, index_def in index_definitions.items():
-            columns = ", ".join(f"[{col}]" for col in index_def["columns"])
-            create_script += f"CREATE {index_def['type']} [{index_name}] ON [{schema}].[{table_name}] ({columns});\n"
-        
-        return create_script
+            WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1
+            AND TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
+        """
 
-    def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
-                              rppts: List[ReplacementPattern] = None):  
-        big_script = ''
-        source_views = [nc.source_view_name(nc.default_rename(x)) for x in src_views_ents] 
-        zz = zip(ents, source_views) if source_views else ents
-        for tp in zz:
-            # source_view_name, source_view_name = nc.source_view_name(entity_name)
-            entity_name = tp[0] if source_views else tp
-            source_view_name = tp[1] if source_views else None
-            match ot:
-                case SQL_OBJECT_TYPE.VIEW:
-                    obj_def, obj_name = self.clone_view(entity_name=entity_name, rppts=rppts)
-                    ot_folder = 'Views'
-                case SQL_OBJECT_TYPE.PULL_SP:
-                    obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
-                    ot_folder = 'StoredProcedures'
-                case SQL_OBJECT_TYPE.PULL_SP:
-                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
-                    ot_folder = 'StoredProcedures'
-            big_script += obj_def + SQL_GO
-            if output_dir:
-                outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
-        return big_script
+        fk_query = f"""
+            SELECT KCU.COLUMN_NAME, KCU2.TABLE_NAME AS REFERENCED_TABLE_NAME, KCU2.COLUMN_NAME AS REFERENCED_COLUMN_NAME
+            FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC
+            JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU ON KCU.CONSTRAINT_NAME = RC.CONSTRAINT_NAME
+            JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU2 ON KCU2.CONSTRAINT_NAME = RC.UNIQUE_CONSTRAINT_NAME
+            WHERE KCU.TABLE_NAME = '{table_name}' AND KCU.TABLE_SCHEMA = '{schema_name}'
+        """
+
+        index_query = f"""
+            SELECT IX.name AS index_name, COL.name AS column_name, IX.type_desc, IX.is_unique, IX.fill_factor
+            FROM sys.indexes IX
+            JOIN sys.index_columns IC ON IX.object_id = IC.object_id AND IX.index_id = IC.index_id
+            JOIN sys.columns COL ON IC.object_id = COL.object_id AND IC.column_id = COL.column_id
+            JOIN sys.tables TBL ON IX.object_id = TBL.object_id
+            JOIN sys.schemas SCH ON TBL.schema_id = SCH.schema_id
+            WHERE TBL.name = '{table_name}' AND SCH.name = '{schema_name}'
+        """
+        connection = self.connection
+
+        with connection.cursor() as cursor:
+            cursor.execute(column_query)
+            columns = cursor.fetchall()
+            if not columns:
+                raise Exception(f'Looks like table {schema_name}.{table_name} does not exist in DB')
+
+            cursor.execute(pk_query)
+            primary_keys = [row[0] for row in cursor.fetchall()]
+            
+            cursor.execute(fk_query)
+            foreign_keys = cursor.fetchall()
+
+            cursor.execute(index_query)
+            indexes = cursor.fetchall()
+
+        script = []
+        script.append(f"CREATE TABLE [{schema_name}].[{table_name}] (")
+        
+        col_defs = []
+        for column in columns:
+            col_name, data_type, is_nullable, char_length = column
+            col_def = f"    [{col_name}] {data_type}"
+            if data_type in ('VARCHAR', 'NVARCHAR', 'CHAR', 'NCHAR') and char_length:
+                col_def += f"({char_length})"
+            col_def += ' NOT NULL' if is_nullable == 'NO' else ' NULL'
+            col_defs.append(col_def)
+        script.append(",\n".join(col_defs))
+
+        if primary_keys:
+            script.append(f",\n    PRIMARY KEY ({', '.join(primary_keys)})")
+
+        for fk in foreign_keys:
+            script.append(f",\n    FOREIGN KEY ([{fk[0]}]) REFERENCES [{fk[1]}]([{fk[2]}])")
+        
+        script.append("\n);\n")
+
+        for index in indexes:
+            unique = 'UNIQUE ' if index.is_unique else ''
+            script.append(f"CREATE {unique}{index.type_desc} INDEX [{index.index_name}] ON [{schema_name}].[{table_name}]([{index.column_name}] ASC)")
+            if index.fill_factor:
+                script.append(f" WITH (FILLFACTOR = {index.fill_factor});")
+            else:
+                script.append(";")
+        
+        return "\n".join(script)
+
+        def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
+                                rppts: List[ReplacementPattern] = None):  
+            big_script = ''
+            source_views = [nc.source_view_name(nc.default_rename(x)) for x in src_views_ents] 
+            zz = zip(ents, source_views) if source_views else ents
+            for tp in zz:
+                # source_view_name, source_view_name = nc.source_view_name(entity_name)
+                entity_name = tp[0] if source_views else tp
+                source_view_name = tp[1] if source_views else None
+                match ot:
+                    case SQL_OBJECT_TYPE.VIEW:
+                        obj_def, obj_name = self.clone_view(entity_name=entity_name, rppts=rppts)
+                        ot_folder = 'Views'
+                    case SQL_OBJECT_TYPE.PULL_SP:
+                        obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
+                        ot_folder = 'StoredProcedures'
+                    case SQL_OBJECT_TYPE.PULL_SP:
+                        obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
+                        ot_folder = 'StoredProcedures'
+                big_script += obj_def + SQL_GO
+                if output_dir:
+                    outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
+            return big_script
