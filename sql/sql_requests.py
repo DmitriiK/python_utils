@@ -25,10 +25,14 @@ ColumnInfo = namedtuple('ColumnInfo', ['column_name',
                                        'is_in_pk'
                                        ])
 
+SQL_GO = "\nGO\n"
 
-class SP_Category(Enum):
-    PULL_SP = 1
-    MERGE_SP = 2
+
+class SQL_OBJECT_TYPE(Enum):
+    TABLE = 1
+    VIEW = 2
+    PULL_SP = 3
+    MERGE_SP = 4
 
 
 class SQL_Communicator:
@@ -94,7 +98,7 @@ class SQL_Communicator:
         definition = '\n'.join([row[0] for row in rows])        
         return definition
 
-    def clone_view(self, entity_name: str, 
+    def clone_view(self, entity_name: str,
                    nc_view_name: callable = nc.source_view_name,
                    rppts: List[ReplacementPattern] = None):
         nc_view_name = nc_view_name or nc.view_name  # default naming conv for view name                    
@@ -106,7 +110,7 @@ class SQL_Communicator:
         if rppts:
             view_def = apply_mappings(view_def, rppts)  # applying some code replacemements, defined in congigs
         view_def = apply_sql_formating(view_def)
-        view_def = view_def.replace(view_name, view_name2) + '\nGO\n'
+        view_def = view_def.replace(view_name, view_name2) + SQL_GO
         return view_def, view_name2
 
     def generate_merge_stm(self, tbl_srs: str, tbl_dst: str) -> str:
@@ -228,19 +232,26 @@ class SQL_Communicator:
         
         return create_script
 
-    def create_sps(self, sp_cat: SP_Category, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None):  
-        sps = ''
+    def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
+                              rppts: List[ReplacementPattern] = None):  
+        big_script = ''
         source_views = [nc.source_view_name(nc.default_rename(x)) for x in src_views_ents] 
         zz = zip(ents, source_views) if source_views else ents
         for tp in zz:
             # source_view_name, source_view_name = nc.source_view_name(entity_name)
             entity_name = tp[0] if source_views else tp
             source_view_name = tp[1] if source_views else None
-            if sp_cat == SP_Category.PULL_SP:
-                spdef, spname = self.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
-            else:
-                spdef, spname = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
-            sps += spdef + '\nGO\n'
+            match ot:
+                case SQL_OBJECT_TYPE.VIEW:
+                    obj_def, obj_name = self.clone_view(entity_name=entity_name, rppts=rppts)
+                    ot_folder = 'Views'
+                case SQL_OBJECT_TYPE.PULL_SP:
+                    obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
+                    ot_folder = 'StoredProcedures'
+                case SQL_OBJECT_TYPE.PULL_SP:
+                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
+                    ot_folder = 'StoredProcedures'
+            big_script += obj_def + SQL_GO
             if output_dir:
-                outo.output_to_file(output_dir, "StoredProcedures", spname, spdef)
-        return sps
+                outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
+        return big_script

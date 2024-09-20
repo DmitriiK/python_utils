@@ -11,6 +11,14 @@
             "console": "integratedTerminal",
             "program": "${workspaceFolder}/main.py",
             "args": ["--launch_config_path",  "configs\\launch_configs\\launch_config.yml", ]
+        },
+        {
+            "name": "Views creation",
+            "type": "debugpy",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}/main.py",
+            "args": ["--launch_config_path",  "configs\\launch_configs\\launch_config_views.yml", ]
         }
     ]
 }

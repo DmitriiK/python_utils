@@ -3,8 +3,8 @@ import logging
 import pyperclip
 
 from configs.lauch_config import load_launch_config, LaunchConfig
-from file_parsing.file_utils import clone_tables_from_file, clone_views_from_file
-from sql.sql_requests import SQL_Communicator, SP_Category
+from file_parsing.file_utils import clone_tables_from_file
+from sql.sql_requests import SQL_Communicator, SQL_OBJECT_TYPE
 
 default_launch_config_path = r'configs\launch_configs\launch_config.yml'
 # Initialize parser
@@ -27,21 +27,21 @@ def launch_stage(stage: str):
             return table_defs
 
         case 'CLONE_VIEW':
-            view_defs = clone_views_from_file(input_folder=cfg.input_folder,
-                                              entity_names=cfg.src_views_ents or cfg.entities,
-                                              output_folder=cfg.output_folder,
-                                              rppts=cfg.code_replacements) 
-            #  nc_view_name=nc.source_view_name to do configuration
-            return view_defs
+            with SQL_Communicator() as mdr:  # todo refactoring to avoid initializing twice
+                view_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.VIEW, ents=cfg.entities, output_dir=cfg.output_folder,
+                                                      rppts=cfg.code_replacements)
+                return view_defs
+                #  nc_view_name=nc.source_view_name to do configuration
 
         case 'CREATE_PULL_SP':
             with SQL_Communicator() as mdr:  # todo refactoring to avoid initializing twice
-                sp_defs = mdr.create_sps(sp_cat=SP_Category.PULL_SP, ents=cfg.entities, src_views_ents=cfg.src_views_ents, output_dir=cfg.output_folder)
+                sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.PULL_SP, ents=cfg.entities, src_views_ents=cfg.src_views_ents,
+                                                    output_dir=cfg.output_folder)
                 return sp_defs
 
         case 'CREATE_MERGE_SP':
             with SQL_Communicator() as mdr:  # todo refactoring to avoid initializing twice
-                sp_defs = mdr.create_sps(sp_cat=SP_Category.MERGE_SP, ents=cfg.entities, output_dir=cfg.output_folder)
+                sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.MERGE_SP, ents=cfg.entities, output_dir=cfg.output_folder)
                 return sp_defs
 
         case _:
