@@ -1,6 +1,7 @@
 import pyodbc
 from typing import List
 import logging
+from typing import Tuple
 from collections import namedtuple
 from enum import Enum
 from datetime import datetime
@@ -154,13 +155,8 @@ class SQL_Communicator:
         create_sp_stm = apply_sql_formating(create_sp_stm)                              
         return create_sp_stm, sp_name
 
-
-    def get_table_definition(self, table_name):
-        sntn = table_name.split('.')
-        if len(sntn) > 1:
-            schema_name, table_name = sntn[0], sntn[1]
-        else:
-            schema_name, table_name = 'dbo', sntn[0]
+    def get_table_definition(self, table_name, new_table_name: str = None):
+        schema_name, table_name = extract_schema_and_table_names(table_name)
 
         column_query = f"""
             SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH
@@ -210,6 +206,8 @@ class SQL_Communicator:
             indexes = cursor.fetchall()
 
         script = []
+        if new_table_name:
+            schema_name, table_name = extract_schema_and_table_names(new_table_name)
         script.append(f"CREATE TABLE [{schema_name}].[{table_name}] (")
         
         col_defs = []
@@ -241,7 +239,7 @@ class SQL_Communicator:
         return "\n".join(script)
 
         def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
-                                rppts: List[ReplacementPattern] = None):  
+                                  rppts: List[ReplacementPattern] = None):  
             big_script = ''
             source_views = [nc.source_view_name(nc.default_rename(x)) for x in src_views_ents] 
             zz = zip(ents, source_views) if source_views else ents
@@ -263,3 +261,11 @@ class SQL_Communicator:
                 if output_dir:
                     outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
             return big_script
+
+def extract_schema_and_table_names(table_name: str) -> Tuple[str, str]:
+        sntn = table_name.split('.')
+        if len(sntn) > 1:
+            schema_name, table_name = sntn[0].strip('[]'), sntn[1].strip('[]')
+        else:
+            schema_name, table_name = 'dbo', sntn[0].strip('[]')
+        return schema_name, table_name 

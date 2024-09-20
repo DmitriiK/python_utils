@@ -68,7 +68,9 @@ class TestSQL(unittest.TestCase):
 
     def test_create_table_stm(self):
         with SQL_Communicator() as mdr:
-            ret = mdr.get_table_definition(nc.table_name(entity_name))
+            table_name = nc.table_name(entity_name)
+            new_table_name = nc.stg_table_name(entity_name)
+            ret = mdr.get_table_definition(table_name, new_table_name)
             assert ret
             print(ret)
 
