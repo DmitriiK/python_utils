@@ -31,9 +31,10 @@ SQL_GO = "\nGO\n"
 
 class SQL_OBJECT_TYPE(Enum):
     TABLE = 1
-    VIEW = 2
-    PULL_SP = 3
-    MERGE_SP = 4
+    STG_TABLE = 2
+    VIEW = 3
+    PULL_SP =4
+    MERGE_SP = 5
 
 
 class SQL_Communicator:
@@ -238,34 +239,46 @@ class SQL_Communicator:
         
         return "\n".join(script)
 
-        def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
-                                  rppts: List[ReplacementPattern] = None):  
-            big_script = ''
-            source_views = [nc.source_view_name(nc.default_rename(x)) for x in src_views_ents] 
-            zz = zip(ents, source_views) if source_views else ents
-            for tp in zz:
-                # source_view_name, source_view_name = nc.source_view_name(entity_name)
-                entity_name = tp[0] if source_views else tp
-                source_view_name = tp[1] if source_views else None
-                match ot:
-                    case SQL_OBJECT_TYPE.VIEW:
-                        obj_def, obj_name = self.clone_view(entity_name=entity_name, rppts=rppts)
-                        ot_folder = 'Views'
-                    case SQL_OBJECT_TYPE.PULL_SP:
-                        obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
-                        ot_folder = 'StoredProcedures'
-                    case SQL_OBJECT_TYPE.PULL_SP:
-                        obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
-                        ot_folder = 'StoredProcedures'
-                big_script += obj_def + SQL_GO
-                if output_dir:
-                    outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
-            return big_script
+    def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
+                              rppts: List[ReplacementPattern] = None): 
+        big_script = ''
+        source_views = [nc.source_view_name(nc.default_rename(x)) for x in src_views_ents] 
+        zz = zip(ents, source_views) if source_views else ents
+        for tp in zz:
+            # source_view_name, source_view_name = nc.source_view_name(entity_name)
+            entity_name = tp[0] if source_views else tp
+            source_view_name = tp[1] if source_views else None
+            match ot:
+                case SQL_OBJECT_TYPE.TABLE:
+                    table_name = nc.table_name(entity_name)
+                    obj_name = nc.table_name(nc.default_rename(entity_name))
+                    obj_def = self.get_table_definition(table_name, obj_name)
+                    ot_folder = 'Tables'
+                case SQL_OBJECT_TYPE.STG_TABLE:
+                    table_name = nc.table_name(entity_name)
+                    obj_name = nc.stg_table_name(entity_name)
+                    obj_def = self.get_table_definition(table_name, obj_name)
+                    ot_folder = 'Tables'
+                case SQL_OBJECT_TYPE.VIEW:
+                    obj_def, obj_name = self.clone_view(entity_name=entity_name, rppts=rppts)
+                    ot_folder = 'Views'
+                case SQL_OBJECT_TYPE.PULL_SP:
+                    obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
+                    ot_folder = 'StoredProcedures'
+                case SQL_OBJECT_TYPE.PULL_SP:
+                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
+                    ot_folder = 'StoredProcedures'
+            big_script += obj_def + SQL_GO
+            if output_dir:
+                outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
+        return big_script
+
 
 def extract_schema_and_table_names(table_name: str) -> Tuple[str, str]:
-        sntn = table_name.split('.')
-        if len(sntn) > 1:
-            schema_name, table_name = sntn[0].strip('[]'), sntn[1].strip('[]')
-        else:
-            schema_name, table_name = 'dbo', sntn[0].strip('[]')
-        return schema_name, table_name 
+    sntn = table_name.split('.')
+    if len(sntn) > 1:
+        schema_name, table_name = sntn[0].strip('[]'), sntn[1].strip('[]')
+    else:
+        schema_name, table_name = 'dbo', sntn[0].strip('[]')
+    return schema_name, table_name
+
