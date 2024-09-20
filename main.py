@@ -20,30 +20,27 @@ def setup_args():
     parser.add_argument("-st", "--stages", help="commal delimetered list of stages(steps) ")
 
 
-def launch_stage(stage: str):
+def launch_stage(mdr: SQL_Communicator, stage: str):
     match stage:
         case 'CLONE_TABLE':
-            table_defs = clone_tables_from_file(cfg.input_folder, cfg.entities, cfg.output_folder)
-            return table_defs
-
+            tables_def = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.TABLE, ents=cfg.entities, output_dir=cfg.output_folder)
+            return tables_def
+            #  nc_view_name=nc.source_view_name to do configuration
+        case 'CLONE_STG_TABLE':
+            tables_def = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.STG_TABLE, ents=cfg.entities, output_dir=cfg.output_folder)
+            return tables_def
         case 'CLONE_VIEW':
-            with SQL_Communicator() as mdr:  # todo refactoring to avoid initializing twice
-                view_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.VIEW, ents=cfg.entities, output_dir=cfg.output_folder,
-                                                      rppts=cfg.code_replacements)
-                return view_defs
-                #  nc_view_name=nc.source_view_name to do configuration
-
+            view_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.VIEW, ents=cfg.entities, output_dir=cfg.output_folder,
+                                                  rppts=cfg.code_replacements)
+            return view_defs
+            #  nc_view_name=nc.source_view_name to do configuration
         case 'CREATE_PULL_SP':
-            with SQL_Communicator() as mdr:  # todo refactoring to avoid initializing twice
-                sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.PULL_SP, ents=cfg.entities, src_views_ents=cfg.src_views_ents,
-                                                    output_dir=cfg.output_folder)
-                return sp_defs
-
+            sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.PULL_SP, ents=cfg.entities, src_views_ents=cfg.src_views_ents,
+                                                output_dir=cfg.output_folder)
+            return sp_defs
         case 'CREATE_MERGE_SP':
-            with SQL_Communicator() as mdr:  # todo refactoring to avoid initializing twice
-                sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.MERGE_SP, ents=cfg.entities, output_dir=cfg.output_folder)
-                return sp_defs
-
+            sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.MERGE_SP, ents=cfg.entities, output_dir=cfg.output_folder)
+            return sp_defs
         case _:
             logging.warning(f'stage {stage} not defined')
 
@@ -63,9 +60,10 @@ else:
             cfg.src_views_ents = args.src_views_ents.split(',')
 logging.info(cfg)
 ss = ''  # string with sql script to copy to clipboard
-for stage in cfg.stages:
-    stage_script = launch_stage(stage)
-    ss += stage_script
+with SQL_Communicator() as mdr:
+    for stage in cfg.stages:
+        stage_script = launch_stage(mdr, stage)
+        ss += stage_script
 
 pyperclip.copy(ss)
 

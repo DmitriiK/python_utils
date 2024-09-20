@@ -15,7 +15,9 @@ entities:
 
 
 stages:
-  - CLONE_VIEW
+  - CLONE_STG_TABLE
+  - CLONE_TABLE
+  # - CLONE_VIEW
 
 code_replacements:
 - re_replace_this: \[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany_tbl\]?
