@@ -30,8 +30,8 @@ def launch_stage(mdr: SQL_Communicator, stage: str, cfg: LaunchConfig):
             tables_def = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.STG_TABLE, ents=cfg.entities, output_dir=cfg.output_folder)
             return tables_def
         case 'CLONE_VIEW':
-            view_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.VIEW, ents=cfg.entities, output_dir=cfg.output_folder,
-                                                  rppts=cfg.code_replacements)
+            view_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.VIEW, ents=cfg.src_views_ents or cfg.entities,
+                                                  output_dir=cfg.output_folder, rppts=cfg.code_replacements)
             return view_defs
             #  nc_view_name=nc.source_view_name to do configuration
         case 'CREATE_PULL_SP':

@@ -3,33 +3,62 @@ input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeed
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases\DataFeedEngineMI'
 
 entities:
-  - GICS_GICS
-  - Symbol_GVKeyEnhanced
-  - Symbol_GVKeySymbol
-  - Symbol_DandBSymbol
-  - KeyDev_FutureEvent
-  - KeyDev_FutureEventToObjectToEventType
-  - FutureEventMkt_FutureEventMkt
-  - FutureEventMkt_FutureEventMktSplitInfo
-  - FutureEventMkt_FutureEventMktToObjectToEventType  
+   - 'GICS_GICS'
+   - 'RefData_SubTypeToGIC'
+   - 'Symbol_DandBSymbol'
+   - 'KeyDev_FutureEvent'
+   - 'RefData_KeyDevEventType'
+   - 'RefData_KeyDevObjectRoleType'
+   - 'RefData_KeyDevStatus'
+   - 'KeyDev_FutureEventToObjectToEventType'
+   - 'FutureEventMkt_FutureEventMkt'
+   - 'RefData_KeyDevEventType'
+   - 'RefData_KeyDevObjectRoleType'
+   - 'FutureEventMkt_FutureEventMktSplitInfo'
+   - 'RefData_KeyDevStatus'
+   - 'FutureEventMkt_FutureEventMktToObjectToEventType'
+   - 'KeyDev_KeyDev'
+   - 'RefData_KeyDevEventType'
+   - 'RefData_KeyDevObjectRoleType'
+   - 'RefData_KeyDevStatus'
+   - 'KeyDev_KeyDevToObjectToEventType'
+   - 'AddtlCompany_Address'
+   - 'RefData_AddressType'
+   - 'AddtlCompany_BusinessDescription'
+   - 'AddtlCompany_LongBusinessDescription'
+   - 'refdata_compensationtype'
+   - 'Professional_PersonProfessional'
+   - 'Professional_PersonProfessionalCompensation'
+   - 'KeyDevPlus_KeyDev'
+   - 'RefData_KeyDevEventType'
+   - 'RefData_KeyDevObjectRoleType'
+   - 'RefData_KeyDevStatus'
+   - 'KeyDevPlus_KeyDevToObjectToEventType'
+   - 'RefData_CharType'
+   - 'CompanyBiteSize_CompanyBiteSize'
+   - 'RefData_CharType'
+   - 'RefData_CharTypeToSubType'
+   - 'CompanyIndOfInt_CompanyIndustriesOfInterest'
+   - 'RefData_CharType'
+   - 'RefData_CharTypeToSubType'
+   - 'CompanyGeosOfInt_CompanyGeosOfInterest'
+   - 'RefData_CharType'
+   - 'RefData_CharTypeToSubType'
+   - 'CompanyStagesOfInt_CompanyStagesOfInterest'
+   - 'CompDetail_CompensationAdjustment'
+   - 'refdata_CompensationAdjustmentType'
+   - 'CompDetail_CompensationDetail'
+   - 'RefData_CompensationSubType'
 
 
-src_views_ents:  # for views have to create another set of names due to naming inconsistencies
-  - GICS_GICS 
-  - Symbol_GVKeyEnhanced
-  - Symbol_GVKeySymbol
-  - Symbol_DandB
-  - KeyDev_FutureEvent
-  - KeyDev_FutureEventToObjectToEventType
-  - KeyDev_FutureEventMkt
-  - KeyDev_FutureEventMktSplitInfo
-  - KeyDev_FutureEventMktToObjectToEventType
-
+src_views_ents: []  # for views have to create another set of names due to naming inconsistencies
+   
 stages:
-  - CLONE_TABLE
+  #- CLONE_TABLE
+  # - CLONE_STG_TABLE
   - CLONE_VIEW
-  - CREATE_MERGE_SP
-  - CREATE_PULL_SP
+  #- CREATE_MERGE_SP
+  #- CREATE_PULL_SP
 
 code_replacements:
 - re_replace_this: \[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany_tbl\]?

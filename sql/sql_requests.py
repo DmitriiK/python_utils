@@ -265,7 +265,7 @@ class SQL_Communicator:
                 case SQL_OBJECT_TYPE.PULL_SP:
                     obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
                     ot_folder = 'StoredProcedures'
-                case SQL_OBJECT_TYPE.PULL_SP:
+                case SQL_OBJECT_TYPE.MERGE_SP:
                     obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
                     ot_folder = 'StoredProcedures'
             big_script += obj_def + SQL_GO
