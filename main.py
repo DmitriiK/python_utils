@@ -3,7 +3,7 @@ import logging
 import pyperclip
 
 from configs.lauch_config import load_launch_config, LaunchConfig
-from file_parsing.file_utils import clone_tables_from_file
+# from file_parsing.file_utils import clone_tables_from_file
 from sql.sql_requests import SQL_Communicator, SQL_OBJECT_TYPE
 
 default_launch_config_path = r'configs\launch_configs\launch_config.yml'
@@ -20,7 +20,7 @@ def setup_args():
     parser.add_argument("-st", "--stages", help="commal delimetered list of stages(steps) ")
 
 
-def launch_stage(mdr: SQL_Communicator, stage: str):
+def launch_stage(mdr: SQL_Communicator, stage: str, cfg: LaunchConfig):
     match stage:
         case 'CLONE_TABLE':
             tables_def = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.TABLE, ents=cfg.entities, output_dir=cfg.output_folder)
@@ -45,25 +45,30 @@ def launch_stage(mdr: SQL_Communicator, stage: str):
             logging.warning(f'stage {stage} not defined')
 
 
-setup_args()
+def main():
+    setup_args()
 
-args = parser.parse_args()
-args_count = sum([1 for arg in vars(args).values() if arg is not None])
-if not args_count:
-    cfg = load_launch_config(default_launch_config_path)
-else:
-    if args.launch_config_path:
-        cfg = load_launch_config(args.launch_config_path)
+    args = parser.parse_args()
+    args_count = sum([1 for arg in vars(args).values() if arg is not None])
+    if not args_count:
+        cfg = load_launch_config(default_launch_config_path)
     else:
-        cfg = LaunchConfig(input_folder=args.input_folder, output_folder=args.input_folder, entities=args.entities.split(','))
-        if args.src_views_ents:
-            cfg.src_views_ents = args.src_views_ents.split(',')
-logging.info(cfg)
-ss = ''  # string with sql script to copy to clipboard
-with SQL_Communicator() as mdr:
-    for stage in cfg.stages:
-        stage_script = launch_stage(mdr, stage)
-        ss += stage_script
+        if args.launch_config_path:
+            cfg = load_launch_config(args.launch_config_path)
+        else:
+            cfg = LaunchConfig(input_folder=args.input_folder, output_folder=args.input_folder, entities=args.entities.split(','))
+            if args.src_views_ents:
+                cfg.src_views_ents = args.src_views_ents.split(',')
+    logging.info(cfg)
+    ss = ''  # string with sql script to copy to clipboard
+    with SQL_Communicator() as mdr:
+        for stage in cfg.stages:
+            logging.info(f'------launching state {stage}----------')
+            stage_script = launch_stage(mdr, stage, cfg)
+            ss += stage_script
 
-pyperclip.copy(ss)
+    pyperclip.copy(ss)
 
+
+if __name__ == "__main__":
+    main()
