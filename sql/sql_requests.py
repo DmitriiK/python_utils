@@ -33,7 +33,7 @@ class SQL_OBJECT_TYPE(Enum):
     TABLE = 1
     STG_TABLE = 2
     VIEW = 3
-    PULL_SP =4
+    PULL_SP = 4
     MERGE_SP = 5
 
 
@@ -83,6 +83,15 @@ class SQL_Communicator:
 
         return columns
 
+    def get_sql_object_id(self, object_name: str):
+        conn = self.connection
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT OBJECT_ID('{object_name}')")
+        r = cursor.fetchone()
+        cursor.close()
+        if r[0]:
+            return int(r[0])
+
     def get_sp_helptext(self, object_name):
         """
         Gets the definition of a SQL Server view or stored procedure.        
@@ -103,8 +112,17 @@ class SQL_Communicator:
     def clone_view(self, entity_name: str,
                    nc_view_name: callable = nc.source_view_name,
                    rppts: List[ReplacementPattern] = None):
-        nc_view_name = nc_view_name or nc.view_name  # default naming conv for view name                    
+        nc_view_name = nc_view_name or nc.source_view_name  # default naming conv for view name                    
         view_name = nc_view_name(entity_name)
+        vid = self.get_sql_object_id(view_name)
+        if not vid:
+            logging.info(f'View {view_name} was not found')
+            view_name = nc.view_name(entity_name)
+            vid = self.get_sql_object_id(view_name)
+        if not vid:
+            logging.info(f'View {view_name} was not found as well. Have to skip view creation')
+            return None, None
+
         view_name = view_name.split('.')[-1]  # to eliminate schema name
         view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
 
