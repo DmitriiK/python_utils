@@ -6,6 +6,7 @@ from configs.lauch_config import load_launch_config, LaunchConfig
 # from file_parsing.file_utils import clone_tables_from_file
 from sql.sql_requests import SQL_Communicator, SQL_OBJECT_TYPE
 
+logging.getLogger().setLevel(logging.WARN)
 default_launch_config_path = r'configs\launch_configs\launch_config.yml'
 # Initialize parser
 parser = argparse.ArgumentParser()

@@ -5,6 +5,7 @@ from typing import Tuple
 from collections import namedtuple
 from enum import Enum
 from datetime import datetime
+import re
 
 from sql.config import CONN_STR
 from configs.lauch_config import ReplacementPattern
@@ -117,20 +118,22 @@ class SQL_Communicator:
         vid = self.get_sql_object_id(view_name)
         if not vid:
             logging.info(f'View {view_name} was not found')
-            view_name = nc.view_name(entity_name)
+            nc_view_name = nc.view_name
+            view_name = nc_view_name(entity_name)
             vid = self.get_sql_object_id(view_name)
         if not vid:
-            logging.info(f'View {view_name} was not found as well. Have to skip view creation')
+            logging.warning(f'View {view_name} was not found as well. Have to skip view creation')
             return None, None
 
         view_name = view_name.split('.')[-1]  # to eliminate schema name
         view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
 
         view_def = self.get_sp_helptext(view_name)
+        #  print(view_def)
         if rppts:
             view_def = apply_mappings(view_def, rppts)  # applying some code replacemements, defined in congigs
         view_def = apply_sql_formating(view_def)
-        view_def = view_def.replace(view_name, view_name2) + SQL_GO
+        view_def = re.sub(view_name, view_name2, view_def, flags=re.IGNORECASE) + SQL_GO
         return view_def, view_name2
 
     def generate_merge_stm(self, tbl_srs: str, tbl_dst: str) -> str:
@@ -286,9 +289,12 @@ class SQL_Communicator:
                 case SQL_OBJECT_TYPE.MERGE_SP:
                     obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
                     ot_folder = 'StoredProcedures'
-            big_script += obj_def + SQL_GO
-            if output_dir:
-                outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
+            if obj_name:
+                big_script += obj_def + SQL_GO
+                if output_dir:
+                    outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
+            else:
+                logging.warning(f'could not create {ot} for {entity_name}. Skipping.')
         return big_script
 
 
