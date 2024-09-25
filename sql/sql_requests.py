@@ -173,9 +173,10 @@ class SQL_Communicator:
         create_sp_stm = apply_sql_formating(create_sp_stm)
         return create_sp_stm, sp_name
   
-    def create_pull_sp(self, entity_name, entity_name2=None, source_view_name=None, create_or_alter=True):
+    def create_pull_sp(self, entity_name, entity_name2=None, src_views_ent=None, create_or_alter=True):
         entity_name2 = entity_name2 or nc.default_rename(entity_name)
-        source_view_name = source_view_name or nc.source_view_name(entity_name)
+        src_views_ent = src_views_ent or entity_name
+        _, source_view_name = self.get_view_names(src_views_ent)
         sp_name = nc.pull_sp_name(entity_name=entity_name2)
         dst_tbl = nc.stg_table_name(entity_name)
         ins_stm = self.generate_insert_stm(source_view_name, dst_tbl)
@@ -270,12 +271,10 @@ class SQL_Communicator:
     def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
                               rppts: List[ReplacementPattern] = None): 
         big_script = ''
-        source_views = [nc.source_view_name(nc.default_rename(x)) for x in src_views_ents] 
-        zz = zip(ents, source_views) if source_views else ents
+        zz = zip(ents, src_views_ents) if src_views_ents else ents
         for tp in zz:
-            # source_view_name, source_view_name = nc.source_view_name(entity_name)
-            entity_name = tp[0] if source_views else tp
-            source_view_name = tp[1] if source_views else None
+            entity_name = tp[0] if src_views_ents else tp
+            src_views_ent = tp[1] if src_views_ents else None
             match ot:
                 case SQL_OBJECT_TYPE.TABLE:
                     table_name = nc.table_name(entity_name)
@@ -291,7 +290,7 @@ class SQL_Communicator:
                     obj_def, obj_name = self.clone_view(entity_name=entity_name, rppts=rppts)
                     ot_folder = 'Views'
                 case SQL_OBJECT_TYPE.PULL_SP:
-                    obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
+                    obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)
                     ot_folder = 'StoredProcedures'
                 case SQL_OBJECT_TYPE.MERGE_SP:
                     obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
