@@ -93,7 +93,7 @@ class SQL_Communicator:
         if r[0]:
             return int(r[0])
 
-    def get_sp_helptext(self, object_name):
+    def get_module_def(self, object_name: str) -> str:
         """
         Gets the definition of a SQL Server view or stored procedure.        
         Args:
@@ -102,13 +102,13 @@ class SQL_Communicator:
         Returns:
             str: The definition of the view or stored procedure.
         """
+        query = f"SELECT definition FROM sys.sql_modules WHERE object_id = OBJECT_ID('{object_name}');"
         conn = self.connection
         cursor = conn.cursor()
-        cursor.execute(f"EXEC sp_helptext '{object_name}'")
-        rows = cursor.fetchall()
+        cursor.execute(query)
+        row = cursor.fetchone()
         cursor.close()
-        definition = '\n'.join([row[0] for row in rows])        
-        return definition
+        return row[0]
 
     def clone_view(self, entity_name: str,
                    nc_view_name: callable = nc.source_view_name,
@@ -128,7 +128,7 @@ class SQL_Communicator:
         view_name = view_name.split('.')[-1]  # to eliminate schema name
         view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
 
-        view_def = self.get_sp_helptext(view_name)
+        view_def = self.get_module_def(view_name)
         #  print(view_def)
         if rppts:
             view_def = apply_mappings(view_def, rppts)  # applying some code replacemements, defined in congigs

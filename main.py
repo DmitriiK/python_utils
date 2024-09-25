@@ -69,6 +69,7 @@ def main():
             ss += stage_script
 
     pyperclip.copy(ss)
+    print(f'script content has been copied to the clipboard, {len(ss)} symbols')
 
 
 if __name__ == "__main__":
