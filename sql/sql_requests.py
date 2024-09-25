@@ -189,8 +189,8 @@ class SQL_Communicator:
         schema_name, table_name = extract_schema_and_table_names(table_name)
 
         column_query = f"""
-            SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH
-            FROM INFORMATION_SCHEMA.COLUMNS
+        SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE
+        FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         """
 
@@ -242,10 +242,17 @@ class SQL_Communicator:
         
         col_defs = []
         for column in columns:
-            col_name, data_type, is_nullable, char_length = column
+            col_name, data_type, is_nullable, char_length, num_precision, num_scale = column
+            data_type = data_type.upper()
             col_def = f"    [{col_name}] {data_type}"
+
+            # Add length for character types
             if data_type in ('VARCHAR', 'NVARCHAR', 'CHAR', 'NCHAR') and char_length:
                 col_def += f"({char_length})"
+            # Add precision and scale for numeric types
+            elif data_type in ('NUMERIC', 'DECIMAL') and num_precision is not None and num_scale is not None:
+                col_def += f"({num_precision}, {num_scale})"
+
             col_def += ' NOT NULL' if is_nullable == 'NO' else ' NULL'
             col_defs.append(col_def)
         script.append(",\n".join(col_defs))
