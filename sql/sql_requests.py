@@ -110,9 +110,7 @@ class SQL_Communicator:
         cursor.close()
         return row[0]
 
-    def clone_view(self, entity_name: str,
-                   nc_view_name: callable = nc.source_view_name,
-                   rppts: List[ReplacementPattern] = None):
+    def get_view_names(self, entity_name: str, nc_view_name: callable = nc.source_view_name):
         nc_view_name = nc_view_name or nc.source_view_name  # default naming conv for view name                    
         view_name = nc_view_name(entity_name)
         vid = self.get_sql_object_id(view_name)
@@ -122,11 +120,20 @@ class SQL_Communicator:
             view_name = nc_view_name(entity_name)
             vid = self.get_sql_object_id(view_name)
         if not vid:
-            logging.warning(f'View {view_name} was not found as well. Have to skip view creation')
+            logging.warning(f'View {view_name} was not found as well')
             return None, None
 
         view_name = view_name.split('.')[-1]  # to eliminate schema name
         view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
+        return view_name, view_name2
+
+    def clone_view(self, entity_name: str,
+                   nc_view_name: callable = nc.source_view_name,
+                   rppts: List[ReplacementPattern] = None):
+        view_name, view_name2 = self.get_view_names(entity_name, nc_view_name)
+        if not view_name:
+            logging.warning(f'View for {entity_name} was not found. Have to skip view cloning')
+            return None, None
 
         view_def = self.get_module_def(view_name)
         #  print(view_def)
