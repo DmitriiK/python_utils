@@ -9,7 +9,7 @@ import re
 
 from sql.config import CONN_STR
 from configs.lauch_config import ReplacementPattern
-from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, PULL_SP, or_alter
+from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, MERGE_STM_WITHOUT_UPDATE, PULL_SP, or_alter
 import sql.naming_convention as nc
 from sql.code_transformations import apply_mappings, apply_sql_formating
 import sql.output_to as outo
@@ -150,10 +150,14 @@ class SQL_Communicator:
 
         join_cond = ' AND '.join([f'DST.{x.column_name} = SRC.{x.column_name}' for x in cols if x.is_in_pk])
         non_pk_cols = [x.column_name for x in cols if not x.is_in_pk]
-        update_part = ',\n'.join([f'{x} = SRC.{x}' for x in non_pk_cols])
-        update_cond = ' AND '.join([f"ISNULL(DST.{x}, 0) <> ISNULL(SRC.{x}, 0) " for x in non_pk_cols])
-        stm = MERGE_STM.format(tbl_dst=tbl_dst, tbl_srs=tbl_srs, join_cond=join_cond, update_cond=update_cond,
-                               update_part=update_part, insrt=insrt, insrt2=insrt2)
+        if non_pk_cols:
+            update_part = ',\n'.join([f'{x} = SRC.{x}' for x in non_pk_cols])
+            update_cond = ' AND '.join([f"ISNULL(DST.{x}, 0) <> ISNULL(SRC.{x}, 0) " for x in non_pk_cols])
+            stm = MERGE_STM.format(tbl_dst=tbl_dst, tbl_srs=tbl_srs, join_cond=join_cond, update_cond=update_cond,
+                                   update_part=update_part, insrt=insrt, insrt2=insrt2)
+        else:  # if all columns are in PK 
+            stm = MERGE_STM_WITHOUT_UPDATE.format(tbl_dst=tbl_dst, tbl_srs=tbl_srs, join_cond=join_cond,  insrt=insrt, insrt2=insrt2)
+
         return stm
 
     def generate_insert_stm(self, view_srs: str, tbl_dst: str) -> str:

@@ -49,6 +49,16 @@ MERGE_STM = """ MERGE {tbl_dst} AS DST
                 DELETE
             ;"""
 
+MERGE_STM_WITHOUT_UPDATE = """ MERGE {tbl_dst} AS DST
+            USING   {tbl_srs} as SRC WITH (NOLOCK)
+                ON {join_cond}
+            WHEN NOT MATCHED BY TARGET THEN
+                INSERT ({insrt})
+                VALUES ({insrt2})
+            WHEN NOT MATCHED BY SOURCE THEN
+                DELETE
+            ;"""
+
 
 MERGE_SP = """CREATE {or_alter}PROCEDURE {sp_name}
   AS
@@ -60,7 +70,7 @@ PULL_SP = """CREATE  {or_alter}  PROCEDURE {sp_name}
 AS
 BEGIN
     TRUNCATE TABLE  {table_name}
-    {ins_stm};
+    {ins_stm}; 
 END
 """
 
