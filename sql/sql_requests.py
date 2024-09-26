@@ -27,7 +27,7 @@ ColumnInfo = namedtuple('ColumnInfo', ['column_name',
                                        'is_in_pk'
                                        ])
 
-SQL_GO = "\nGO\n"
+SQL_GO = "\nGO\n\n"
 
 
 class SQL_OBJECT_TYPE(Enum):
@@ -185,13 +185,14 @@ class SQL_Communicator:
         create_sp_stm = apply_sql_formating(create_sp_stm)                              
         return create_sp_stm, sp_name
 
-    def get_table_definition(self, table_name, new_table_name: str = None):
+    def get_table_definition(self, table_name, new_table_name: str = None, drop_existing: bool = True):
         schema_name, table_name = extract_schema_and_table_names(table_name)
 
         column_query = f"""
         SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE
         FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
+            ORDER BY ORDINAL_POSITION
         """
 
         pk_query = f"""
@@ -217,6 +218,7 @@ class SQL_Communicator:
             JOIN sys.tables TBL ON IX.object_id = TBL.object_id
             JOIN sys.schemas SCH ON TBL.schema_id = SCH.schema_id
             WHERE TBL.name = '{table_name}' AND SCH.name = '{schema_name}'
+            ORDER BY IC.key_ordinal,  IX.index_id
         """
         connection = self.connection
 
@@ -238,6 +240,8 @@ class SQL_Communicator:
         script = []
         if new_table_name:
             schema_name, table_name = extract_schema_and_table_names(new_table_name)
+        if drop_existing:
+            script.append(f"drop TABLE if exists [{schema_name}].[{table_name}];" + SQL_GO)
         script.append(f"CREATE TABLE [{schema_name}].[{table_name}] (")
         
         col_defs = []
@@ -248,6 +252,8 @@ class SQL_Communicator:
 
             # Add length for character types
             if data_type in ('VARCHAR', 'NVARCHAR', 'CHAR', 'NCHAR') and char_length:
+                if char_length == -1:
+                    char_length = 'MAX'
                 col_def += f"({char_length})"
             # Add precision and scale for numeric types
             elif data_type in ('NUMERIC', 'DECIMAL') and num_precision is not None and num_scale is not None:
@@ -265,14 +271,28 @@ class SQL_Communicator:
         
         script.append("\n);\n")
 
+        index_dict = {}
         for index in indexes:
-            unique = 'UNIQUE ' if index.is_unique else ''
-            script.append(f"CREATE {unique}{index.type_desc} INDEX [{index.index_name}] ON [{schema_name}].[{table_name}]([{index.column_name}] ASC)")
-            if index.fill_factor:
-                script.append(f" WITH (FILLFACTOR = {index.fill_factor});")
+            index_name, column_name, type_desc, is_unique, fill_factor = index
+            if index_name not in index_dict:
+                index_dict[index_name] = {
+                    'columns': [],
+                    'type_desc': type_desc,
+                    'is_unique': is_unique,
+                    'fill_factor': fill_factor
+                }
+            index_dict[index_name]['columns'].append(column_name)
+
+        for index_name, index in index_dict.items():
+            unique = 'UNIQUE ' if index['is_unique'] else ''
+            columns = ", ".join(f"[{col}] ASC" for col in index['columns'])
+            script.append(f"CREATE {unique}{index['type_desc']} INDEX [{index_name}] ON [{schema_name}].[{table_name}]({columns})")
+            if index['fill_factor']:
+                script.append(f" WITH (FILLFACTOR = {index['fill_factor']});")
             else:
                 script.append(";")
-        
+        # Fix ends here
+
         return "\n".join(script)
 
     def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
