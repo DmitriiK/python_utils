@@ -93,6 +93,25 @@ class SQL_Communicator:
         if r[0]:
             return int(r[0])
 
+    def get_table_size(self, object_name: str) -> str:
+        query = f"""
+        SELECT
+            SUM(p.rows) AS RowCounts,
+            (SUM(a.total_pages) * 8) / 1024.0 as TotalSpaceMB
+            FROM sys.tables t
+                INNER JOIN sys.indexes i ON t.OBJECT_ID = i.object_id
+                INNER JOIN sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id
+                INNER JOIN sys.allocation_units a ON p.partition_id = a.container_id
+            WHERE i.OBJECT_ID > 255
+            AND i.index_id IN (0,1)
+            AND t.object_id = OBJECT_ID('{object_name}');"""
+        conn = self.connection
+        cursor = conn.cursor()
+        cursor.execute(query)
+        row = cursor.fetchone()
+        cursor.close()
+        return row
+
     def get_module_def(self, object_name: str) -> str:
         """
         Gets the definition of a SQL Server view or stored procedure.        
