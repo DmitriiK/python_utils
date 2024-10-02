@@ -82,8 +82,15 @@ class TestSQL(unittest.TestCase):
             print(ret)
             pyperclip.copy(ret[0])
 
+    def test_dependencies(self):
+        entity_name = '[KeyDev_KeyDevPlusSource_vw]'
+        with SQL_Communicator() as mdr:
+            ret = mdr.get_object_dependencies(entity_name)
+            assert ret
+            print(ret)
 
     def test_to_file(self):
         spdef, object_type, spname = "create table xxx ()", 'Table', 'dbo.xx_tbl'
         file_path = os.path.join(r'.\output')
         outo.output_to_file(file_path, object_type, spname, spdef)
+

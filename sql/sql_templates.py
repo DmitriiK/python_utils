@@ -1,7 +1,7 @@
 # Query to get column names and PK status
 GET_COLUMNS = """
  SELECT
-         c.name  AS column_name,
+        c.name  AS column_name,
         t.name AS data_type,
         c.max_length,
         c.precision,
@@ -32,6 +32,19 @@ GET_COLUMNS = """
         ORDER BY c.column_id
 
 """
+
+GET_DEPENDENCIES = """
+--note - for cross DB references referenced_id will be null
+SELECT referenced_id, ob.type_desc,
+referenced_entity_name,	referenced_schema_name,	
+referenced_database_name, referenced_server_name		
+FROM sys.sql_expression_dependencies dep
+LEFT JOIN sys.objects ob 
+    on ob.object_id=dep.referenced_id
+WHERE referencing_id = OBJECT_ID(?)
+AND referenced_class_desc = 'OBJECT_OR_COLUMN'   
+"""
+
 
 MERGE_STM = """ MERGE {tbl_dst} AS DST
             USING   {tbl_srs} as SRC WITH (NOLOCK)

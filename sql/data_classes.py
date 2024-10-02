@@ -15,7 +15,8 @@ class DB_Object_Type(Enum):
 class SQL_Object:
     object_id: int
     name: str
+    type: DB_Object_Type
     schema: str = 'dbo'
     db_name: str = None
     server_name: str = None
-    type: DB_Object_Type
+    

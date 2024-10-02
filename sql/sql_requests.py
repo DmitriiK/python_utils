@@ -1,15 +1,15 @@
 import pyodbc
-from typing import List
+from typing import List, Tuple
 import logging
-from typing import Tuple
 from collections import namedtuple
 from enum import Enum
 from datetime import datetime
 import re
 
 from sql.config import CONN_STR
+from sql.data_classes import SQL_Object
 from configs.lauch_config import ReplacementPattern
-from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, MERGE_STM_WITHOUT_UPDATE, PULL_SP, or_alter
+from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, MERGE_STM_WITHOUT_UPDATE, PULL_SP, or_alter, GET_DEPENDENCIES
 import sql.naming_convention as nc
 from sql.code_transformations import apply_mappings, apply_sql_formating
 import sql.output_to as outo
@@ -57,6 +57,18 @@ class SQL_Communicator:
     def __exit__(self, exc_type, exc_value, exc_tb):
         self.connection.close()
 
+    def run_select(self, query: str, is_single_row: bool, *args) -> List[Tuple]:
+        conn = self.connection
+        cursor = conn.cursor()
+        cursor.execute(query, args)
+        if is_single_row:
+            f = cursor.fetchone()
+            ret = [f]
+        else:
+            ret = cursor.fetchall()
+        cursor.close()
+        return ret
+
     def get_columns(self, table_name: str) -> List[ColumnInfo]:
         conn = self.connection
         cursor = conn.cursor()
@@ -85,11 +97,7 @@ class SQL_Communicator:
         return columns
 
     def get_sql_object_id(self, object_name: str):
-        conn = self.connection
-        cursor = conn.cursor()
-        cursor.execute(f"SELECT OBJECT_ID('{object_name}')")
-        r = cursor.fetchone()
-        cursor.close()
+        r = self.run_select(f"SELECT OBJECT_ID('{object_name}')", is_single_row=True)
         if r[0]:
             return int(r[0])
 
@@ -105,29 +113,25 @@ class SQL_Communicator:
             WHERE i.OBJECT_ID > 255
             AND i.index_id IN (0,1)
             AND t.object_id = OBJECT_ID('{object_name}');"""
-        conn = self.connection
-        cursor = conn.cursor()
-        cursor.execute(query)
-        row = cursor.fetchone()
-        cursor.close()
-        return row
+
+        return  self.run_select(query)
 
     def get_module_def(self, object_name: str) -> str:
         """
         Gets the definition of a SQL Server view or stored procedure.        
         Args:
-            cursor (pyodbc.Cursor): The database cursor.
             object_name (str): The name of the view or stored procedure.            
         Returns:
             str: The definition of the view or stored procedure.
         """
         query = f"SELECT definition FROM sys.sql_modules WHERE object_id = OBJECT_ID('{object_name}');"
-        conn = self.connection
-        cursor = conn.cursor()
-        cursor.execute(query)
-        row = cursor.fetchone()
-        cursor.close()
+        row = self.run_select(query=query, is_single_row=True)
         return row[0]
+
+    def get_object_dependencies(self, object_name: str):
+        tt = self.run_select(GET_DEPENDENCIES, True, object_name)
+        ret = [SQL_Object(object_id=x[0], type=x[1], name=x[2], schema=x[3] or 'dbo', db_name=x[4], server_name=x[5]) for x in tt]
+        return ret 
 
     def get_view_names(self, entity_name: str, nc_view_name: callable = nc.source_view_name):
         nc_view_name = nc_view_name or nc.source_view_name  # default naming conv for view name                    
