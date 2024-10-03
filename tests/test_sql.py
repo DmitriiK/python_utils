@@ -85,9 +85,9 @@ class TestSQL(unittest.TestCase):
     def test_dependencies(self):
         entity_name = '[KeyDev_KeyDevPlusSource_vw]'
         with SQL_Communicator() as mdr:
-            ret = mdr.get_object_dependencies(entity_name)
-            assert ret
-            print(ret)
+            ret = mdr.get_object_dependencies(entity_name, is_recursive=True)
+        assert ret
+        print(ret)
 
     def test_to_file(self):
         spdef, object_type, spname = "create table xxx ()", 'Table', 'dbo.xx_tbl'
