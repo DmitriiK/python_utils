@@ -76,8 +76,10 @@ class TestSQL(unittest.TestCase):
 
     def test_clone_view(self):
         entity_name = 'KeyDev_FutureEvent'
+
         with SQL_Communicator() as mdr:
-            ret = mdr.clone_view(entity_name)
+            view_name, view_name2 = mdr.get_view_names(entity_name, nc.source_view_name)
+            ret = mdr.clone_view(view_name, view_name2)
             assert ret
             print(ret)
             pyperclip.copy(ret[0])

@@ -98,8 +98,8 @@ class SQL_Communicator:
 
     def get_sql_object_id(self, object_name: str):
         r = self.run_select(f"SELECT OBJECT_ID('{object_name}')", is_single_row=True)
-        if r[0]:
-            return int(r[0])
+        if r[0] and r[0][0]:
+            return int(r[0][0])
 
     def get_table_size(self, object_name: str) -> str:
         query = f"""
@@ -126,7 +126,8 @@ class SQL_Communicator:
         """
         query = f"SELECT definition FROM sys.sql_modules WHERE object_id = OBJECT_ID('{object_name}');"
         row = self.run_select(query=query, is_single_row=True)
-        return row[0]
+        if row[0] and row[0][0]:
+            return row[0][0]
 
     def get_sql_object(self, object_name: str, schema_name: str = None, db_name: str = None) -> SQL_Object:
         schema_name = schema_name or 'dbo'
@@ -378,11 +379,11 @@ class SQL_Communicator:
                     obj_def = self.get_table_definition(table_name, obj_name)
                     ot_folder = 'Tables'
                 case SQL_OBJECT_TYPE.VIEW:
-                    view_name, view_name2 = self.get_view_names(entity_name, nc_view_name)
+                    view_name, view_name2 = self.get_view_names(entity_name, nc.view_name)
                     if not view_name:
                         logging.warning(f'View for {entity_name} was not found. Have to skip view cloning')
                         continue
-                    obj_def, obj_name = self.clone_view(entity_name=entity_name, rppts=rppts)
+                    obj_def, obj_name = self.clone_view(view_name, view_name, rppts=rppts)
                     ot_folder = 'Views'
                 case SQL_OBJECT_TYPE.PULL_SP:
                     obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)
