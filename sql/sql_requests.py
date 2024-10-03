@@ -7,7 +7,7 @@ from datetime import datetime
 import re
 
 from sql.config import CONN_STR
-from sql.data_classes import SQL_Object
+from sql.data_classes import SQL_Object, DB_Object_Type
 from configs.lauch_config import ReplacementPattern
 from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, MERGE_STM_WITHOUT_UPDATE, PULL_SP, or_alter, GET_DEPENDENCIES
 import sql.naming_convention as nc
@@ -128,7 +128,21 @@ class SQL_Communicator:
         row = self.run_select(query=query, is_single_row=True)
         return row[0]
 
-    def get_object_dependencies(self, object_name: str, is_recursive=False, db_name: str = None, level: int = 1) -> List[SQL_Object]:
+    def get_sql_object(self, object_name: str, schema_name: str = None, db_name: str = None) -> SQL_Object:
+        schema_name = schema_name or 'dbo'
+        db_name = f'{db_name}.' if db_name else ''        
+        query = f"""
+        select ob.object_id, ob.name, ob.type_desc, * 
+        from {db_name}sys.objects ob 
+        join  {db_name}sys.schemas sch on sch.schema_id=ob.schema_id
+        where ob.name=? and sch.name=? """
+        x = self.run_select(query, True, object_name, schema_name)
+        if x:
+            x = x[0]
+            return SQL_Object(object_id=x[0], name=x[1], type=x[2], schema=schema_name or 'dbo', db_name=db_name)
+
+    def get_object_dependencies(self, object_name: str, is_recursive=False, db_name: str = None, db_object_type: DB_Object_Type = None,
+                                level: int = 1) -> List[SQL_Object]:
         db_name = f'{db_name}.' if db_name else ''
         query = GET_DEPENDENCIES.format(db_name=db_name)
         tt = self.run_select(query, False, object_name)
@@ -137,12 +151,18 @@ class SQL_Communicator:
                             db_name=x[4], server_name=x[5]),
                 level)
                 for x in tt]
-
+        for dep, _ in deps:
+            if not dep.object_id:  # object from another DB
+                xx = self.get_sql_object(dep.name, schema_name=dep.schema, db_name=dep.db_name)
+                dep.object_id, dep.type = xx.object_id, xx.type
+        if db_object_type:
+            deps = [x for x in deps if DB_Object_Type(x[0].type) == db_object_type]
         if is_recursive:
             level += 1
             for so, _ in deps:
                 on = f'{so.schema or 'dbo'}.{so.name}'
-                deps_next = self.get_object_dependencies(on, is_recursive=is_recursive, db_name=so.db_name, level=level)
+                deps_next = self.get_object_dependencies(on, is_recursive=is_recursive, db_name=so.db_name, db_object_type=db_object_type,
+                                                         level=level)
                 deps.extend(deps_next)
         return deps
 
@@ -163,14 +183,8 @@ class SQL_Communicator:
         view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
         return view_name, view_name2
 
-    def clone_view(self, entity_name: str,
-                   nc_view_name: callable = nc.source_view_name,
+    def clone_view(self, view_name: str, view_name2: str,
                    rppts: List[ReplacementPattern] = None):
-        view_name, view_name2 = self.get_view_names(entity_name, nc_view_name)
-        if not view_name:
-            logging.warning(f'View for {entity_name} was not found. Have to skip view cloning')
-            return None, None
-
         view_def = self.get_module_def(view_name)
         #  print(view_def)
         if rppts:
@@ -364,6 +378,10 @@ class SQL_Communicator:
                     obj_def = self.get_table_definition(table_name, obj_name)
                     ot_folder = 'Tables'
                 case SQL_OBJECT_TYPE.VIEW:
+                    view_name, view_name2 = self.get_view_names(entity_name, nc_view_name)
+                    if not view_name:
+                        logging.warning(f'View for {entity_name} was not found. Have to skip view cloning')
+                        continue
                     obj_def, obj_name = self.clone_view(entity_name=entity_name, rppts=rppts)
                     ot_folder = 'Views'
                 case SQL_OBJECT_TYPE.PULL_SP:

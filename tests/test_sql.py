@@ -83,9 +83,11 @@ class TestSQL(unittest.TestCase):
             pyperclip.copy(ret[0])
 
     def test_dependencies(self):
+        from sql.data_classes import DB_Object_Type
         entity_name = '[KeyDev_KeyDevPlusSource_vw]'
+        filter = DB_Object_Type.VIEW
         with SQL_Communicator() as mdr:
-            ret = mdr.get_object_dependencies(entity_name, is_recursive=True)
+            ret = mdr.get_object_dependencies(entity_name, is_recursive=True, db_object_type=filter)
         assert ret
         pprint(ret)
 
