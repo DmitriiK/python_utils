@@ -128,14 +128,21 @@ class SQL_Communicator:
         row = self.run_select(query=query, is_single_row=True)
         return row[0]
 
-    def get_object_dependencies(self, object_name: str, is_recursive=False) -> List[SQL_Object]:
-        tt = self.run_select(GET_DEPENDENCIES, False, object_name)
-        deps = [SQL_Object(object_id=x[0], type=x[1], name=x[2], schema=x[3] or 'dbo', db_name=x[4], server_name=x[5]) for x in tt]
+    def get_object_dependencies(self, object_name: str, is_recursive=False, db_name: str = None, level: int = 1) -> List[SQL_Object]:
+        db_name = f'{db_name}.' if db_name else ''
+        query = GET_DEPENDENCIES.format(db_name=db_name)
+        tt = self.run_select(query, False, object_name)
+        deps = [(SQL_Object(object_id=x[0],
+                            type=x[1], name=x[2], schema=x[3] or 'dbo',
+                            db_name=x[4], server_name=x[5]),
+                level)
+                for x in tt]
+
         if is_recursive:
-            itrnext = (x for x in deps if x.object_id) # object_id null means object from another db - it wont work for them
-            for so in itrnext:
+            level += 1
+            for so, _ in deps:
                 on = f'{so.schema or 'dbo'}.{so.name}'
-                deps_next = self.get_object_dependencies(on, is_recursive)
+                deps_next = self.get_object_dependencies(on, is_recursive=is_recursive, db_name=so.db_name, level=level)
                 deps.extend(deps_next)
         return deps
 

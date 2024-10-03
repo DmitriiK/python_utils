@@ -1,6 +1,6 @@
 import unittest
 import os
-
+from pprint import pprint
 import pyperclip
 
 from sql.sql_requests import SQL_Communicator
@@ -87,7 +87,7 @@ class TestSQL(unittest.TestCase):
         with SQL_Communicator() as mdr:
             ret = mdr.get_object_dependencies(entity_name, is_recursive=True)
         assert ret
-        print(ret)
+        pprint(ret)
 
     def test_to_file(self):
         spdef, object_type, spname = "create table xxx ()", 'Table', 'dbo.xx_tbl'

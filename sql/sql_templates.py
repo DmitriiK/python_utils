@@ -39,7 +39,7 @@ SELECT referenced_id, ob.type_desc,
 referenced_entity_name,	referenced_schema_name,	
 referenced_database_name, referenced_server_name		
 FROM sys.sql_expression_dependencies dep
-LEFT JOIN sys.objects ob 
+LEFT JOIN {db_name}sys.objects ob 
     on ob.object_id=dep.referenced_id
 WHERE referencing_id = OBJECT_ID(?)
 AND referenced_class_desc = 'OBJECT_OR_COLUMN'   
