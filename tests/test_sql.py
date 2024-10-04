@@ -90,7 +90,7 @@ class TestSQL(unittest.TestCase):
         with SQL_Communicator() as mdr:
             view_name, view_name2 = mdr.get_view_names(entity_name, nc.source_view_name)
             ret = mdr.deep_clone_view(view_name, view_name2, lc.code_replacements)
-            assert len(ret) ==2
+            assert len(ret) == 2
             print(ret)
 
     def test_dependencies(self):

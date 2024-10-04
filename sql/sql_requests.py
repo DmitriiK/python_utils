@@ -4,6 +4,7 @@ import logging
 from collections import namedtuple
 from enum import Enum
 from datetime import datetime
+import itertools
 import re
 
 from sql.config import CONN_STR
@@ -187,18 +188,28 @@ class SQL_Communicator:
     def deep_clone_view(self, view_name: str,
                         view_name2: str,
                         rppts: List[ReplacementPattern] = None,
-                        ret_lst: List[Tuple] = None):
+                        ret_lst: List[Tuple] = None,
+                        level: int = 0) -> List[Tuple] :
         if ret_lst is None:
             ret_lst = []
-        view_def, is_replaced = self.clone_view(view_name, view_name2, rppts)
+        level += 1
+        new_view_def, is_replaced = self.clone_view(view_name, view_name2, rppts)
         if not ret_lst or is_replaced:  # for first level we do clone any way, for lower -only if we need to replace something
-            ret_lst.append((view_def, view_name2))
+            ret_lst.append([new_view_def, view_name2, view_name, level])
 
         child_vws = self.get_object_dependencies(object_name=view_name, is_recursive=True, db_object_type=DB_Object_Type.VIEW)
         for vw, _ in child_vws:
             en, suffix = nc.entity_name_from_view_name(vw.name)
             vnc2 = nc.default_rename(en) + suffix
-            self.deep_clone_view(vw.full_name, vnc2, rppts, ret_lst)
+            self.deep_clone_view(vw.full_name, vnc2, rppts, ret_lst, level)
+
+        # need to change reference to renamed cloned views
+        for ret_itm in ret_lst:
+            nvd, level = ret_itm[0], ret_itm[3]
+            rppts_ref = [ReplacementPattern(re_replace_this=fr'\b{x[2]}\b', re_replace_to=x[1]) 
+                         for x in ret_lst if x[3] == level + 1]
+            ret_itm[0] = apply_mappings(nvd, rppts_ref)
+
         return ret_lst
 
     def clone_view(self, view_name: str, view_name2: str,
