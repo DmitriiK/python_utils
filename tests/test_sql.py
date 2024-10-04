@@ -79,10 +79,19 @@ class TestSQL(unittest.TestCase):
 
         with SQL_Communicator() as mdr:
             view_name, view_name2 = mdr.get_view_names(entity_name, nc.source_view_name)
-            ret = mdr.clone_view(view_name, view_name2)
+            ret = mdr.clone_view(view_name, view_name2, lc.code_replacements)
             assert ret
             print(ret)
             pyperclip.copy(ret[0])
+
+    def test_deep_clone_view(self):
+        entity_name = 'KeyDev_FutureEvent'
+
+        with SQL_Communicator() as mdr:
+            view_name, view_name2 = mdr.get_view_names(entity_name, nc.source_view_name)
+            ret = mdr.deep_clone_view(view_name, view_name2, lc.code_replacements)
+            assert len(ret) ==2
+            print(ret)
 
     def test_dependencies(self):
         from sql.data_classes import DB_Object_Type

@@ -1,5 +1,8 @@
 import re
 
+suffix_view_name = '_vw'
+suffix_src_view_name = 'Source' + suffix_view_name
+
 
 def remove_second_occurrence(text, substring):
     # Find all occurrences of the substring (case-insensitive)
@@ -34,11 +37,24 @@ def pull_sp_name(entity_name):
 
 
 def source_view_name(entity_name):
-    return f'dbo.{entity_name}Source_vw'
+    return f'dbo.{entity_name}{suffix_src_view_name}'
 
 
 def view_name(entity_name):
-    return f'dbo.{entity_name}_vw'
+    return f'dbo.{entity_name}{suffix_view_name}'
+
+
+def entity_name_from_view_name(view_name):
+    view_name = view_name.split('.')[-1].strip('[]')
+    found = False
+    for sf in suffix_src_view_name, suffix_view_name:
+        if view_name.lower().endswith(sf.lower()):
+            entity_name = view_name[:-len(sf)]
+            found = True
+            break
+    if not found:
+        raise ValueError(f'view name {view_name} does not meet naming convention')
+    return entity_name, sf
 
 
 def fix_shit(entity_name):

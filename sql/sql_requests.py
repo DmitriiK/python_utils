@@ -11,7 +11,7 @@ from sql.data_classes import SQL_Object, DB_Object_Type
 from configs.lauch_config import ReplacementPattern
 from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, MERGE_STM_WITHOUT_UPDATE, PULL_SP, or_alter, GET_DEPENDENCIES
 import sql.naming_convention as nc
-from sql.code_transformations import apply_mappings, apply_sql_formating
+from sql.code_transformations import apply_mappings, apply_sql_formating, apply_create_or_alter_view
 import sql.output_to as outo
 
 ColumnInfo = namedtuple('ColumnInfo', ['column_name',
@@ -143,7 +143,7 @@ class SQL_Communicator:
             return SQL_Object(object_id=x[0], name=x[1], type=x[2], schema=schema_name or 'dbo', db_name=db_name)
 
     def get_object_dependencies(self, object_name: str, is_recursive=False, db_name: str = None, db_object_type: DB_Object_Type = None,
-                                level: int = 1) -> List[SQL_Object]:
+                                level: int = 1) -> List[Tuple[SQL_Object, int]]:
         db_name = f'{db_name}.' if db_name else ''
         query = GET_DEPENDENCIES.format(db_name=db_name)
         tt = self.run_select(query, False, object_name)
@@ -184,15 +184,35 @@ class SQL_Communicator:
         view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
         return view_name, view_name2
 
+    def deep_clone_view(self, view_name: str,
+                        view_name2: str,
+                        rppts: List[ReplacementPattern] = None,
+                        ret_lst: List[Tuple] = None):
+        if ret_lst is None:
+            ret_lst = []
+        view_def, is_replaced = self.clone_view(view_name, view_name2, rppts)
+        if not ret_lst or is_replaced:  # for first level we do clone any way, for lower -only if we need to replace something
+            ret_lst.append((view_def, view_name2))
+
+        child_vws = self.get_object_dependencies(object_name=view_name, is_recursive=True, db_object_type=DB_Object_Type.VIEW)
+        for vw, _ in child_vws:
+            en, suffix = nc.entity_name_from_view_name(vw.name)
+            vnc2 = nc.default_rename(en) + suffix
+            self.deep_clone_view(vw.full_name, vnc2, rppts, ret_lst)
+        return ret_lst
+
     def clone_view(self, view_name: str, view_name2: str,
                    rppts: List[ReplacementPattern] = None):
         view_def = self.get_module_def(view_name)
+        new_view_def, is_replaced = view_def, False
         #  print(view_def)
         if rppts:
-            view_def = apply_mappings(view_def, rppts)  # applying some code replacemements, defined in congigs
+            new_view_def = apply_mappings(view_def, rppts)
+            is_replaced = new_view_def != view_def
+        view_def = apply_create_or_alter_view(view_def)
         view_def = apply_sql_formating(view_def)
         view_def = re.sub(view_name, view_name2, view_def, flags=re.IGNORECASE) + SQL_GO
-        return view_def, view_name2
+        return view_def, is_replaced
 
     def generate_merge_stm(self, tbl_srs: str, tbl_dst: str) -> str:
         cols = self.get_columns(table_name=tbl_dst)
@@ -383,7 +403,8 @@ class SQL_Communicator:
                     if not view_name:
                         logging.warning(f'View for {entity_name} was not found. Have to skip view cloning')
                         continue
-                    obj_def, obj_name = self.clone_view(view_name, view_name, rppts=rppts)
+                    obj_def, _ = self.clone_view(view_name, view_name2, rppts=rppts)
+                    obj_name = view_name2
                     ot_folder = 'Views'
                 case SQL_OBJECT_TYPE.PULL_SP:
                     obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)

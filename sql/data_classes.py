@@ -19,4 +19,9 @@ class SQL_Object:
     schema: str = 'dbo'
     db_name: str = None
     server_name: str = None
+
+    @property
+    def full_name(self):
+        return f'{self.schema or 'dbo'}.{self.name}'
+
     
