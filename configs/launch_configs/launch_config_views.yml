@@ -3,7 +3,7 @@ input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeed
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases\DataFeedEngineMI'
 
 entities:
-  - Professional_CompensationAdjustment
+  - KeyDev_FutureEvent
   # - Professional_CompensationDetail
 
 

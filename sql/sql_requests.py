@@ -232,10 +232,10 @@ class SQL_Communicator:
         if rppts:
             new_view_def = apply_mappings(view_def, rppts)
             is_replaced = new_view_def != view_def
-        view_def = apply_create_or_alter_view(view_def)
-        view_def = apply_sql_formating(view_def)
-        view_def = re.sub(view_name, view_name2, view_def, flags=re.IGNORECASE) + SQL_GO
-        return view_def, is_replaced
+        new_view_def = apply_create_or_alter_view(new_view_def)
+        new_view_def = apply_sql_formating(new_view_def)
+        new_view_def = re.sub(view_name, view_name2, new_view_def, flags=re.IGNORECASE) + SQL_GO
+        return new_view_def, is_replaced
 
     def generate_merge_stm(self, tbl_srs: str, tbl_dst: str) -> str:
         cols = self.get_columns(table_name=tbl_dst)
