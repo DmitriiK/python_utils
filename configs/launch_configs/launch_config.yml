@@ -53,8 +53,8 @@ src_views_ents:
 stages:
 #- CLONE_TABLE
 #  - CLONE_STG_TABLE
-  #- CLONE_VIEW
-  - CREATE_MERGE_SP
+  - CLONE_VIEW
+ - CREATE_MERGE_SP
   - CREATE_PULL_SP
 
 code_replacements:

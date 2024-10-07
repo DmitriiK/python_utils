@@ -2,6 +2,7 @@ import re
 
 suffix_view_name = '_vw'
 suffix_src_view_name = 'Source' + suffix_view_name
+suffix_tbl = '_tbl'
 
 
 def remove_second_occurrence(text, substring):
@@ -47,7 +48,7 @@ def view_name(entity_name):
 def entity_name_from_view_name(view_name):
     view_name = view_name.split('.')[-1].strip('[]')
     found = False
-    for sf in suffix_src_view_name, suffix_view_name:
+    for sf in suffix_src_view_name, suffix_view_name, suffix_tbl:
         if view_name.lower().endswith(sf.lower()):
             entity_name = view_name[:-len(sf)]
             found = True

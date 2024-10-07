@@ -23,7 +23,7 @@ def apply_mappings(input_str: str, rps: List[ReplacementPattern]):
 
 def apply_create_or_alter_view(input_str: str):
     re_replace_this, replace_to = (r'\bCREATE\s+VIEW\s+',
-                                   'CREATE or ALTER VIEW')
+                                   'CREATE or ALTER VIEW ')
     pattern = re.compile(re_replace_this, re.IGNORECASE)
     out_str = re.sub(pattern, replace_to, input_str)
     return out_str

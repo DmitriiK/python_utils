@@ -115,7 +115,7 @@ class SQL_Communicator:
             AND i.index_id IN (0,1)
             AND t.object_id = OBJECT_ID('{object_name}');"""
 
-        return  self.run_select(query)
+        return self.run_select(query)
 
     def get_module_def(self, object_name: str) -> str:
         """
@@ -125,7 +125,9 @@ class SQL_Communicator:
         Returns:
             str: The definition of the view or stored procedure.
         """
-        query = f"SELECT definition FROM sys.sql_modules WHERE object_id = OBJECT_ID('{object_name}');"
+        nnn = parse_db_obj_full_name(object_name)
+        db_name = '' if len(nnn) < 3 else nnn[0] + '.'
+        query = f"SELECT definition FROM {db_name}sys.sql_modules WHERE object_id = OBJECT_ID('{object_name}');"
         row = self.run_select(query=query, is_single_row=True)
         if row[0] and row[0][0]:
             return row[0][0]
@@ -204,8 +206,9 @@ class SQL_Communicator:
         def deep_clone_view_recursive(view_name: str, view_name2: str, level: int):
             level += 1
             new_view_def, is_replaced = self.clone_view(view_name, view_name2, rppts)
-            if not ret_lst or is_replaced:  # for first level we do clone any way, for lower -only if we need to replace something
-                ret_lst.append([new_view_def, view_name2, view_name, level])
+            if new_view_def:
+                if not ret_lst or is_replaced:  # for first level we do clone any way, for lower -only if we need to replace something
+                    ret_lst.append([new_view_def, view_name2, view_name, level])
 
             child_vws = self.get_object_dependencies(object_name=view_name, is_recursive=True, db_object_type=DB_Object_Type.VIEW)
             for vw, _ in child_vws:
@@ -220,13 +223,17 @@ class SQL_Communicator:
             nvd, level = ret_itm[0], ret_itm[3]
             rppts_ref = [ReplacementPattern(re_replace_this=fr'\b{extract_schema_and_table_names(x[2])[1]}\b', replace_to=x[1])
                          for x in ret_lst if x[3] == level + 1]
-            ret_itm[0] = apply_mappings(nvd, rppts_ref)
+            if rppts_ref:
+                ret_itm[0] = apply_mappings(nvd, rppts_ref)
 
         return ret_lst
 
     def clone_view(self, view_name: str, view_name2: str,
                    rppts: List[ReplacementPattern] = None):
         view_def = self.get_module_def(view_name)
+        if not view_def:
+            logging.warn(f'definiton for view {view_name} is not available')
+            return None, False
         new_view_def, is_replaced = view_def, False
         #  print(view_def)
         if rppts:
@@ -453,11 +460,15 @@ class SQL_Communicator:
         return big_script
 
 
+def parse_db_obj_full_name(obj_name: str) -> List[str]:
+    return [x.strip('[]') for x in obj_name.split('.')]
+
+
 def extract_schema_and_table_names(table_name: str) -> Tuple[str, str]:
-    sntn = table_name.split('.')
-    if len(sntn) > 1:
-        schema_name, table_name = sntn[0].strip('[]'), sntn[1].strip('[]')
-    else:
-        schema_name, table_name = 'dbo', sntn[0].strip('[]')
+    sntn = parse_db_obj_full_name(table_name)
+    if len(sntn) == 2:
+        schema_name, table_name = sntn[0], sntn[1]
+    elif len(sntn) == 1:
+        schema_name, table_name = 'dbo', sntn[0]
     return schema_name, table_name
 

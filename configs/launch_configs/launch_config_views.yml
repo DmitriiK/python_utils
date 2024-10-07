@@ -3,8 +3,37 @@ input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeed
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases\DataFeedEngineMI'
 
 entities:
+  - AddtlCompany_Address
+  - AddtlCompany_BusinessDescription
+  - AddtlCompany_LongBusinessDescription
+  - CompanyBiteSize_CompanyBiteSize
+  - CompanyGeosOfInt_CompanyGeosOfInterest
+  - CompanyIndOfInt_CompanyIndustriesOfInterest
+  - CompanyStagesOfInt_CompanyStagesOfInterest
+  - GICS_GICS
   - KeyDev_FutureEvent
-  # - Professional_CompensationDetail
+  - KeyDev_FutureEventToObjectToEventType
+  - KeyDev_KeyDev
+  - KeyDev_KeyDevToObjectToEventType
+  - Professional_PersonProfessionalCompensation
+  - Professional_PersonProfessional
+  - refdata_CompensationAdjustmentType
+  - RefData_CompensationSubType
+  - refdata_compensationtype
+  - RefData_SubTypeToGIC
+  - Symbol_DandB
+  - RefData_KeyDevEventType
+  - RefData_KeyDevObjectRoleType
+  - KeyDev_FutureEventMkt
+  - KeyDev_FutureEventMktSplitInfo
+  - KeyDev_FutureEventMktToObjectToEventType
+  - RefData_AddressType
+  - KeyDev_KeyDevPlus
+  - KeyDev_KeyDevToObjectToEventType
+  - RefData_CharType
+  - RefData_CharTypeToSubType
+  - Professional_CompensationAdjustment
+  - Professional_CompensationDetail
 
 
 stages:
