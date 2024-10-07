@@ -4,8 +4,8 @@ from pydantic import BaseModel, Field
 
 
 class ReplacementPattern(BaseModel):
-    re_replace_this: str = Field(None, description="regular exrpesssion - target for search in replacement")
-    replace_to: str = Field(None, description="string that should be used instead value that fits re_replace_this RE")
+    re_replace_this: str = Field(description="regular exrpesssion - target for search in replacement")
+    replace_to: str = Field(description="string that should be used instead value that fits re_replace_this RE")
 
 
 class LaunchConfig(BaseModel):

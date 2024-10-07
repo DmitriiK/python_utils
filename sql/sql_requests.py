@@ -206,7 +206,7 @@ class SQL_Communicator:
         # need to change reference to renamed cloned views
         for ret_itm in ret_lst:
             nvd, level = ret_itm[0], ret_itm[3]
-            rppts_ref = [ReplacementPattern(re_replace_this=fr'\b{x[2]}\b', re_replace_to=x[1]) 
+            rppts_ref = [ReplacementPattern(re_replace_this=fr'\b{extract_schema_and_table_names(x[2])[1]}\b', replace_to=x[1])
                          for x in ret_lst if x[3] == level + 1]
             ret_itm[0] = apply_mappings(nvd, rppts_ref)
 

@@ -86,7 +86,6 @@ class TestSQL(unittest.TestCase):
 
     def test_deep_clone_view(self):
         entity_name = 'KeyDev_FutureEvent'
-
         with SQL_Communicator() as mdr:
             view_name, view_name2 = mdr.get_view_names(entity_name, nc.source_view_name)
             ret = mdr.deep_clone_view(view_name, view_name2, lc.code_replacements)
