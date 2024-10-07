@@ -22,6 +22,11 @@ class SQL_Object:
 
     @property
     def full_name(self):
-        return f'{self.schema or 'dbo'}.{self.name}'
+        nnn = f'{self.schema or 'dbo'}.{self.name}'
+        if self.db_name:
+            nnn = f'{self.db_name}.{nnn}'
+            if self.server_name:
+                nnn = f'{self.server_name}.{nnn}'
+        return nnn
 
     

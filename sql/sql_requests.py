@@ -187,9 +187,17 @@ class SQL_Communicator:
 
     def deep_clone_view(self, view_name: str,
                         view_name2: str,
-                        rppts: List[ReplacementPattern] = None,
-                        ret_lst: List[Tuple] = None,
-                        level: int = 0) -> List[Tuple]:
+                        rppts: List[ReplacementPattern] = None) -> List[Tuple[str, str, str, str]]:
+        """_summary_
+
+        Args:
+            view_name (str): view name for cloning
+            view_name2 (str): name of cloned view
+            rppts (List[ReplacementPattern], optional): patterns of code replacement. Defaults to None.
+
+        Returns:
+            List[Tuple]: new_view_def, view_name2, view_name, level
+        """
 
         ret_lst, level = [], 0
 
@@ -397,7 +405,7 @@ class SQL_Communicator:
 
     def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
                               rppts: List[ReplacementPattern] = None): 
-        big_script = ''
+        big_script, new_objects, already_created = '', [], set()
         zz = zip(ents, src_views_ents) if src_views_ents else ents
         for tp in zz:
             entity_name = tp[0] if src_views_ents else tp
@@ -407,32 +415,41 @@ class SQL_Communicator:
                     table_name = nc.table_name(entity_name)
                     obj_name = nc.table_name(nc.default_rename(entity_name))
                     obj_def = self.get_table_definition(table_name, obj_name)
+                    new_objects = [obj_name, obj_def]
                     ot_folder = 'Tables'
                 case SQL_OBJECT_TYPE.STG_TABLE:
                     table_name = nc.table_name(entity_name)
                     obj_name = nc.stg_table_name(entity_name)
                     obj_def = self.get_table_definition(table_name, obj_name)
+                    new_objects = [obj_name, obj_def]
                     ot_folder = 'Tables'
                 case SQL_OBJECT_TYPE.VIEW:
-                    view_name, view_name2 = self.get_view_names(entity_name, nc.view_name)
+                    view_name, view_name2 = self.get_view_names(entity_name)
                     if not view_name:
                         logging.warning(f'View for {entity_name} was not found. Have to skip view cloning')
                         continue
-                    obj_def, _ = self.clone_view(view_name, view_name2, rppts=rppts)
-                    obj_name = view_name2
+                    new_views = self.deep_clone_view(view_name, view_name2, rppts=rppts)
+                    new_objects = [(v[1], v[0]) for v in new_views]
+
                     ot_folder = 'Views'
                 case SQL_OBJECT_TYPE.PULL_SP:
                     obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)
+                    new_objects = [obj_name, obj_def]
                     ot_folder = 'StoredProcedures'
                 case SQL_OBJECT_TYPE.MERGE_SP:
                     obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
+                    new_objects = [obj_name, obj_def]                    
                     ot_folder = 'StoredProcedures'
-            if obj_name:
-                big_script += obj_def + SQL_GO
-                if output_dir:
-                    outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
-            else:
-                logging.warning(f'could not create {ot} for {entity_name}. Skipping.')
+
+            for obj_name, obj_def in new_objects:        
+                if obj_name:
+                    if obj_name not in already_created:
+                        big_script += obj_def + SQL_GO
+                        if output_dir:
+                            outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
+                    already_created.add(obj_name)  # to avoid double creation of child views been refe-ed from many parent views
+                else:
+                    logging.warning(f'could not create {ot} for {entity_name}. Skipping.')
         return big_script
 
 
