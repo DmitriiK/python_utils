@@ -90,6 +90,7 @@ class TestSQL(unittest.TestCase):
             view_name, view_name2 = mdr.get_view_names(entity_name, nc.source_view_name)
             ret = mdr.deep_clone_view(view_name, view_name2, lc.code_replacements)
             assert len(ret) == 2
+            assert ret[1][1] in ret[0][0]  # new name of cloned child view should be in the definition of parent view
             print(ret)
 
     def test_dependencies(self):

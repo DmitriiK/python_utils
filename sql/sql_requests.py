@@ -189,19 +189,23 @@ class SQL_Communicator:
                         view_name2: str,
                         rppts: List[ReplacementPattern] = None,
                         ret_lst: List[Tuple] = None,
-                        level: int = 0) -> List[Tuple] :
-        if ret_lst is None:
-            ret_lst = []
-        level += 1
-        new_view_def, is_replaced = self.clone_view(view_name, view_name2, rppts)
-        if not ret_lst or is_replaced:  # for first level we do clone any way, for lower -only if we need to replace something
-            ret_lst.append([new_view_def, view_name2, view_name, level])
+                        level: int = 0) -> List[Tuple]:
 
-        child_vws = self.get_object_dependencies(object_name=view_name, is_recursive=True, db_object_type=DB_Object_Type.VIEW)
-        for vw, _ in child_vws:
-            en, suffix = nc.entity_name_from_view_name(vw.name)
-            vnc2 = nc.default_rename(en) + suffix
-            self.deep_clone_view(vw.full_name, vnc2, rppts, ret_lst, level)
+        ret_lst, level = [], 0
+
+        def deep_clone_view_recursive(view_name: str, view_name2: str, level: int):
+            level += 1
+            new_view_def, is_replaced = self.clone_view(view_name, view_name2, rppts)
+            if not ret_lst or is_replaced:  # for first level we do clone any way, for lower -only if we need to replace something
+                ret_lst.append([new_view_def, view_name2, view_name, level])
+
+            child_vws = self.get_object_dependencies(object_name=view_name, is_recursive=True, db_object_type=DB_Object_Type.VIEW)
+            for vw, _ in child_vws:
+                en, suffix = nc.entity_name_from_view_name(vw.name)
+                vnc2 = nc.default_rename(en) + suffix
+                deep_clone_view_recursive(vw.full_name, vnc2, level)
+
+        deep_clone_view_recursive(view_name, view_name2, level)
 
         # need to change reference to renamed cloned views
         for ret_itm in ret_lst:
