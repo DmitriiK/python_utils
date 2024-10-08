@@ -4,10 +4,9 @@ import logging
 from collections import namedtuple
 from enum import Enum
 from datetime import datetime
-import itertools
 import re
 
-from sql.config import CONN_STR
+import sql.config as sql_config
 from sql.data_classes import SQL_Object, DB_Object_Type
 from configs.lauch_config import ReplacementPattern
 from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, MERGE_STM_WITHOUT_UPDATE, PULL_SP, or_alter, GET_DEPENDENCIES
@@ -41,7 +40,8 @@ class SQL_OBJECT_TYPE(Enum):
 
 class SQL_Communicator:
     def __enter__(self):
-        self.conn_str = CONN_STR
+        self.DB_NAME = sql_config.DB_NAME
+        self.conn_str = sql_config.CONN_STR
         logging.info(self.conn_str)
         print('connecting...')
         self.connection = pyodbc.connect(self.conn_str, timeout=60)
@@ -228,12 +228,15 @@ class SQL_Communicator:
         deep_clone_view_recursive(view_name, view_name2, level)
         return ret_lst
 
-    def clone_view(self, view_name: str, view_name2: str,
+    def clone_view(self, view_name: str,
+                   view_name2: str,
                    rppts: List[ReplacementPattern] = None):
-        view_def = self.get_module_def(view_name)
+        view_def = self.get_module_def(view_name).strip()
         if not view_def:
             logging.warn(f'definiton for view {view_name} is not available')
             return None, False
+        view_name2 = _create_view_name_for_replacement(view_name, view_name2, self.DB_NAME)
+        view_def = rename_sql_object(view_def, view_name2)
         new_view_def, is_replaced = view_def, False
         #  print(view_def)
         if rppts:
@@ -241,9 +244,8 @@ class SQL_Communicator:
             is_replaced = new_view_def != view_def
         new_view_def = apply_create_or_alter_view(new_view_def)
         new_view_def = apply_sql_formating(new_view_def)
-        view_name_re = rf'\b{parse_db_obj_full_name(view_name)[-1]}\b'
-        new_view_def = re.sub(view_name_re, view_name2, new_view_def, flags=re.IGNORECASE) + SQL_GO
-        return new_view_def, is_replaced
+
+        return new_view_def + SQL_GO, is_replaced
 
     def generate_merge_stm(self, tbl_srs: str, tbl_dst: str) -> str:
         cols = self.get_columns(table_name=tbl_dst)
@@ -418,18 +420,17 @@ class SQL_Communicator:
         for tp in zz:
             entity_name = tp[0] if src_views_ents else tp
             src_views_ent = tp[1] if src_views_ents else None
+            new_objects = None
             match ot:
                 case SQL_OBJECT_TYPE.TABLE:
                     table_name = nc.table_name(entity_name)
                     obj_name = nc.table_name(nc.default_rename(entity_name))
                     obj_def = self.get_table_definition(table_name, obj_name)
-                    new_objects = [obj_name, obj_def]
                     ot_folder = 'Tables'
                 case SQL_OBJECT_TYPE.STG_TABLE:
                     table_name = nc.table_name(entity_name)
                     obj_name = nc.stg_table_name(entity_name)
                     obj_def = self.get_table_definition(table_name, obj_name)
-                    new_objects = [obj_name, obj_def]
                     ot_folder = 'Tables'
                 case SQL_OBJECT_TYPE.VIEW:
                     view_name, view_name2 = self.get_view_names(entity_name)
@@ -442,14 +443,15 @@ class SQL_Communicator:
                     ot_folder = 'Views'
                 case SQL_OBJECT_TYPE.PULL_SP:
                     obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)
-                    new_objects = [obj_name, obj_def]
                     ot_folder = 'StoredProcedures'
                 case SQL_OBJECT_TYPE.MERGE_SP:
-                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))
-                    new_objects = [obj_name, obj_def]                    
+                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))                 
                     ot_folder = 'StoredProcedures'
+            
+            if new_objects is None:  # most of types returns defintions for single object
+                new_objects = [(obj_name, obj_def)]
 
-            for obj_name, obj_def in new_objects:        
+            for obj_name, obj_def in new_objects:
                 if obj_name:
                     if obj_name not in already_created:
                         big_script += obj_def + SQL_GO
@@ -472,4 +474,29 @@ def extract_schema_and_table_names(table_name: str) -> Tuple[str, str]:
     elif len(sntn) == 1:
         schema_name, table_name = 'dbo', sntn[0]
     return schema_name, table_name
+
+
+def rename_sql_object(sql_def: str, new_name: str):
+    # Regular expression to match creating patterns and capture the original object name
+    pattern = r"^(create(?: or alter)?(?:\s+view|\s+procedure|\s+function)?)\s+(\S+\.?\S*)"
+    
+    def repl(match):
+        create_stmt = match.group(1)  # The create or alter statement part
+        return f"{create_stmt} {new_name}"
+
+    updated_sql_def = re.sub(pattern, repl, sql_def, flags=re.IGNORECASE | re.MULTILINE)
+    return updated_sql_def
+
+
+def _create_view_name_for_replacement(view_name: str, view_name2: str, current_db_name: str):
+    nnn = parse_db_obj_full_name(view_name)
+    if len(nnn) > 2:
+        dbname = nnn[-3]
+        if current_db_name != dbname:
+            nnn2 = parse_db_obj_full_name(view_name2)
+            if len(nnn2) < 3:
+                schema = nnn2[0] if len(nnn2) == 2 else 'dbo'
+                view_name2 = f'{dbname}.{schema}.{nnn2[-1]}'
+    return view_name2
+
 
