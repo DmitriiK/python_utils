@@ -28,7 +28,7 @@ ColumnInfo = namedtuple('ColumnInfo', ['column_name',
                                        'is_in_pk'
                                        ])
 
-SQL_GO = "\nGO\n\n"
+SQL_GO = "\nGO\n"
 
 
 class SQL_OBJECT_TYPE(Enum):
@@ -200,32 +200,32 @@ class SQL_Communicator:
         Returns:
             List[Tuple]: new_view_def, view_name2, view_name, level
         """
-
         ret_lst, level = [], 0
 
-        def deep_clone_view_recursive(view_name: str, view_name2: str, level: int):
+        def deep_clone_view_recursive(view_name: str, view_name2: str, level: int) -> bool:
             level += 1
-            new_view_def, is_replaced = self.clone_view(view_name, view_name2, rppts)
-            if new_view_def:
-                if not ret_lst or is_replaced:  # for first level we do clone any way, for lower -only if we need to replace something
-                    ret_lst.append([new_view_def, view_name2, view_name, level])
-
+            # before creation of new definiton need to create all child definitions if necessary
             child_vws = self.get_object_dependencies(object_name=view_name, is_recursive=True, db_object_type=DB_Object_Type.VIEW)
+            child_renamings = []
             for vw, _ in child_vws:
                 en, suffix = nc.entity_name_from_view_name(vw.name)
                 vnc2 = nc.default_rename(en) + suffix
-                deep_clone_view_recursive(vw.full_name, vnc2, level)
+                cnbc = deep_clone_view_recursive(vw.full_name, vnc2, level)
+                if cnbc:
+                    child_renamings.append((vw.name, vnc2))
+
+            new_view_def, is_replaced = self.clone_view(view_name, view_name2, rppts)
+            clone_need_to_be_created = False
+            if new_view_def:
+                if not ret_lst or is_replaced or child_renamings:
+                    # for first level we do clone any way, for lower -only if we need to replace something in the view itself or in the child view
+                    rppts_ref = [ReplacementPattern(re_replace_this=fr'\b{x[0]}\b', replace_to=x[1]) for x in child_renamings]
+                    new_view_def = apply_mappings(new_view_def, rppts_ref)
+                    ret_lst.append([new_view_def, view_name2, view_name, level])
+                    clone_need_to_be_created = True
+            return clone_need_to_be_created
 
         deep_clone_view_recursive(view_name, view_name2, level)
-
-        # need to change reference to renamed cloned views
-        for ret_itm in ret_lst:
-            nvd, level = ret_itm[0], ret_itm[3]
-            rppts_ref = [ReplacementPattern(re_replace_this=fr'\b{extract_schema_and_table_names(x[2])[1]}\b', replace_to=x[1])
-                         for x in ret_lst if x[3] == level + 1]
-            if rppts_ref:
-                ret_itm[0] = apply_mappings(nvd, rppts_ref)
-
         return ret_lst
 
     def clone_view(self, view_name: str, view_name2: str,
@@ -241,7 +241,8 @@ class SQL_Communicator:
             is_replaced = new_view_def != view_def
         new_view_def = apply_create_or_alter_view(new_view_def)
         new_view_def = apply_sql_formating(new_view_def)
-        new_view_def = re.sub(view_name, view_name2, new_view_def, flags=re.IGNORECASE) + SQL_GO
+        view_name_re = rf'\b{parse_db_obj_full_name(view_name)[-1]}\b'
+        new_view_def = re.sub(view_name_re, view_name2, new_view_def, flags=re.IGNORECASE) + SQL_GO
         return new_view_def, is_replaced
 
     def generate_merge_stm(self, tbl_srs: str, tbl_dst: str) -> str:
