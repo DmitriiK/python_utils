@@ -214,7 +214,7 @@ class SQL_Communicator:
                 if cnbc:
                     child_renamings.append((vw.name, vnc2))
 
-            new_view_def, is_replaced = self.clone_view(view_name, view_name2, rppts)
+            new_view_def, is_replaced, db_name = self.clone_view(view_name, view_name2, rppts)
             clone_need_to_be_created = False
             if new_view_def:
                 if not ret_lst or is_replaced or child_renamings:
@@ -235,7 +235,7 @@ class SQL_Communicator:
         if not view_def:
             logging.warn(f'definiton for view {view_name} is not available')
             return None, False
-        view_name2 = _create_view_name_for_replacement(view_name, view_name2, self.DB_NAME)
+        view_name2 = _create_obj_name_for_replacement(view_name, view_name2)
         view_def = rename_sql_object(view_def, view_name2)
         new_view_def, is_replaced = view_def, False
         #  print(view_def)
@@ -245,7 +245,14 @@ class SQL_Communicator:
         new_view_def = apply_create_or_alter_view(new_view_def)
         new_view_def = apply_sql_formating(new_view_def)
 
-        return new_view_def + SQL_GO, is_replaced
+        db_name = None
+        nnn = parse_db_obj_full_name(view_name)
+        if len(nnn) > 2:
+            db_name = nnn[-3]
+            new_db_name = apply_mappings(db_name, rppts)  # need to replace db names as well
+            is_replaced = db_name == new_db_name
+            db_name = new_db_name
+        return new_view_def + SQL_GO, is_replaced, db_name
 
     def generate_merge_stm(self, tbl_srs: str, tbl_dst: str) -> str:
         cols = self.get_columns(table_name=tbl_dst)
@@ -488,15 +495,11 @@ def rename_sql_object(sql_def: str, new_name: str):
     return updated_sql_def
 
 
-def _create_view_name_for_replacement(view_name: str, view_name2: str, current_db_name: str):
-    nnn = parse_db_obj_full_name(view_name)
-    if len(nnn) > 2:
-        dbname = nnn[-3]
-        if current_db_name != dbname:
-            nnn2 = parse_db_obj_full_name(view_name2)
-            if len(nnn2) < 3:
-                schema = nnn2[0] if len(nnn2) == 2 else 'dbo'
-                view_name2 = f'{dbname}.{schema}.{nnn2[-1]}'
-    return view_name2
+def _create_obj_name_for_replacement(obj_name: str, obj_name2: str):
+    nnn = parse_db_obj_full_name(obj_name)
+    if len(nnn) > 1:
+        return f'{nnn[-2]}.{obj_name2}'
+    return obj_name2
+
 
 
