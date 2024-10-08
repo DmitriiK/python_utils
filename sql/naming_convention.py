@@ -55,6 +55,8 @@ def entity_name_from_view_name(view_name):
             break
     if not found:
         raise ValueError(f'view name {view_name} does not meet naming convention')
+    if sf == suffix_tbl:  # shit happens, and in such cases we will rename it using "vw" convention
+        sf = suffix_view_name
     return entity_name, sf
 
 
