@@ -4,15 +4,15 @@ import logging
 from collections import namedtuple
 from enum import Enum
 from datetime import datetime
-import re
 
-import sql.config as sql_config
+import sql.config as sql_config 
 from sql.data_classes import SQL_Object, DB_Object_Type
 from configs.lauch_config import ReplacementPattern
 from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, MERGE_STM_WITHOUT_UPDATE, PULL_SP, or_alter, GET_DEPENDENCIES
 import sql.naming_convention as nc
 from sql.code_transformations import apply_mappings, apply_sql_formating, apply_create_or_alter_view
 import sql.output_to as outo
+from sql.utils import get_table_schema_db, rename_sql_object, create_obj_name_for_replacement, parse_db_obj_full_name
 
 ColumnInfo = namedtuple('ColumnInfo', ['column_name',
                                        'data_type',
@@ -235,7 +235,7 @@ class SQL_Communicator:
         if not view_def:
             logging.warn(f'definiton for view {view_name} is not available')
             return None, False
-        view_name2 = _create_obj_name_for_replacement(view_name, view_name2)
+        view_name2 = create_obj_name_for_replacement(view_name, view_name2)
         view_def = rename_sql_object(view_def, view_name2)
         new_view_def, is_replaced = view_def, False
         #  print(view_def)
@@ -301,7 +301,7 @@ class SQL_Communicator:
         return create_sp_stm, sp_name
 
     def get_table_definition(self, table_name, new_table_name: str = None, drop_existing: bool = True):
-        schema_name, table_name = extract_schema_and_table_names(table_name)
+        schema_name, table_name, _ = get_table_schema_db(table_name)
 
         column_query = f"""
         SELECT 
@@ -352,8 +352,8 @@ class SQL_Communicator:
 
             cursor.execute(pk_query)
             primary_keys = [row[0] for row in cursor.fetchall()]
-            
             cursor.execute(fk_query)
+            
             foreign_keys = cursor.fetchall()
 
             cursor.execute(index_query)
@@ -361,7 +361,7 @@ class SQL_Communicator:
 
         script = []
         if new_table_name:
-            schema_name, table_name = extract_schema_and_table_names(new_table_name)
+            schema_name, table_name, _ = get_table_schema_db(new_table_name)
         if drop_existing:
             script.append(f"drop TABLE if exists [{schema_name}].[{table_name}];" + SQL_GO)
         script.append(f"CREATE TABLE [{schema_name}].[{table_name}] (")
@@ -469,38 +469,3 @@ class SQL_Communicator:
                 else:
                     logging.warning(f'could not create {ot} for {entity_name}. Skipping.')
         return big_script
-
-
-def parse_db_obj_full_name(obj_name: str) -> List[str]:
-    return [x.strip('[]') for x in obj_name.split('.')]
-
-
-def extract_schema_and_table_names(table_name: str) -> Tuple[str, str]:
-    sntn = parse_db_obj_full_name(table_name)
-    if len(sntn) == 2:
-        schema_name, table_name = sntn[0], sntn[1]
-    elif len(sntn) == 1:
-        schema_name, table_name = 'dbo', sntn[0]
-    return schema_name, table_name
-
-
-def rename_sql_object(sql_def: str, new_name: str):
-    # Regular expression to match creating patterns and capture the original object name
-    pattern = r"^(create(?: or alter)?(?:\s+view|\s+procedure|\s+function)?)\s+(\S+\.?\S*)"
-    
-    def repl(match):
-        create_stmt = match.group(1)  # The create or alter statement part
-        return f"{create_stmt} {new_name}"
-
-    updated_sql_def = re.sub(pattern, repl, sql_def, flags=re.IGNORECASE | re.MULTILINE)
-    return updated_sql_def
-
-
-def _create_obj_name_for_replacement(obj_name: str, obj_name2: str):
-    nnn = parse_db_obj_full_name(obj_name)
-    if len(nnn) > 1:
-        return f'{nnn[-2]}.{obj_name2}'
-    return obj_name2
-
-
-
