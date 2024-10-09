@@ -7,7 +7,7 @@ from sql.utils import get_table_schema_db
 
 def output_to_file(output_folder: str, object_type: str, object_name: str, object_def: str, db_name: str = None):
     on, sn, _ = get_table_schema_db(object_name)
-    directory_path = os.path.join(output_folder, sn, db_name, object_type) if db_name else os.path.join(output_folder, sn, object_type)
+    directory_path = os.path.join(output_folder, db_name, sn, object_type) if db_name else os.path.join(output_folder, sn, object_type)
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
 
