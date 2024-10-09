@@ -102,7 +102,7 @@ class SQL_Communicator:
         if r[0] and r[0][0]:
             return int(r[0][0])
 
-    def get_table_size(self, object_name: str) -> str:
+    def get_table_size(self, object_name: str) -> Tuple[int, float]:
         query = f"""
         SELECT
             SUM(p.rows) AS RowCounts,
@@ -115,7 +115,9 @@ class SQL_Communicator:
             AND i.index_id IN (0,1)
             AND t.object_id = OBJECT_ID('{object_name}');"""
 
-        return self.run_select(query)
+        rs = self.run_select(query, is_single_row=True)
+        if rs:
+            return ((rs[0][0], rs[0][1]))
 
     def get_module_def(self, object_name: str) -> str:
         """

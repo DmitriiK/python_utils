@@ -103,6 +103,12 @@ class TestSQL(unittest.TestCase):
         assert ret
         pprint(ret)
 
+    def test_table_size(self):
+        tbl = 'stg.Professional_Compensation_tbl'
+        with SQL_Communicator() as sc:
+            rows_count, table_size = sc.get_table_size(tbl)
+            print(f'rows {rows_count}, stage table size: {table_size}')
+
     def test_to_file(self):
         spdef, object_type, spname = "create table xxx ()", 'Table', 'dbo.xx_tbl'
         file_path = os.path.join(r'.\output')
