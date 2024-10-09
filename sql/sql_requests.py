@@ -189,7 +189,7 @@ class SQL_Communicator:
 
     def deep_clone_view(self, view_name: str,
                         view_name2: str,
-                        rppts: List[ReplacementPattern] = None) -> List[Tuple[str, str, str, str]]:
+                        rppts: List[ReplacementPattern] = None) -> List[Tuple[str, str, str, int, str]]:
         """_summary_
 
         Args:
@@ -198,7 +198,7 @@ class SQL_Communicator:
             rppts (List[ReplacementPattern], optional): patterns of code replacement. Defaults to None.
 
         Returns:
-            List[Tuple]: new_view_def, view_name2, view_name, level
+            List[Tuple]: new_view_def, view_name2, view_name, level, db_name
         """
         ret_lst, level = [], 0
 
@@ -221,7 +221,7 @@ class SQL_Communicator:
                     # for first level we do clone any way, for lower -only if we need to replace something in the view itself or in the child view
                     rppts_ref = [ReplacementPattern(re_replace_this=fr'\b{x[0]}\b', replace_to=x[1]) for x in child_renamings]
                     new_view_def = apply_mappings(new_view_def, rppts_ref)
-                    ret_lst.append([new_view_def, view_name2, view_name, level])
+                    ret_lst.append([new_view_def, view_name2, view_name, level, db_name])
                     clone_need_to_be_created = True
             return clone_need_to_be_created
 
@@ -230,7 +230,7 @@ class SQL_Communicator:
 
     def clone_view(self, view_name: str,
                    view_name2: str,
-                   rppts: List[ReplacementPattern] = None):
+                   rppts: List[ReplacementPattern] = None) -> Tuple[str, str, bool, str]:
         view_def = self.get_module_def(view_name).strip()
         if not view_def:
             logging.warn(f'definiton for view {view_name} is not available')
@@ -445,7 +445,7 @@ class SQL_Communicator:
                         logging.warning(f'View for {entity_name} was not found. Have to skip view cloning')
                         continue
                     new_views = self.deep_clone_view(view_name, view_name2, rppts=rppts)
-                    new_objects = [(v[1], v[0]) for v in new_views]
+                    new_objects = [(v[1], v[0], v[4]) for v in new_views]
 
                     ot_folder = 'Views'
                 case SQL_OBJECT_TYPE.PULL_SP:
@@ -456,15 +456,16 @@ class SQL_Communicator:
                     ot_folder = 'StoredProcedures'
             
             if new_objects is None:  # most of types returns defintions for single object
-                new_objects = [(obj_name, obj_def)]
+                new_objects = [(obj_name, obj_def, None)]
 
-            for obj_name, obj_def in new_objects:
+            for obj_name, obj_def, db_name in new_objects:
                 if obj_name:
                     if obj_name not in already_created:
-                        big_script += obj_def + SQL_GO
+                        db_name = db_name or self.DB_NAME
+                        big_script += f'USE {db_name}' + SQL_GO + obj_def + SQL_GO
                         if output_dir:
-                            outo.output_to_file(output_dir, ot_folder, obj_name, obj_def)
-                    already_created.add(obj_name)  # to avoid double creation of child views been refe-ed from many parent views
+                            outo.output_to_file(output_dir, ot_folder, obj_name, obj_def, db_name)
+                        already_created.add(obj_name)  # to avoid double creation of child views been refe-ed from many parent views
                 else:
                     logging.warning(f'could not create {ot} for {entity_name}. Skipping.')
         return big_script
