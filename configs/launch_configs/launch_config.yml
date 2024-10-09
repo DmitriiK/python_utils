@@ -36,7 +36,7 @@ code_replacements:
 - re_replace_this: \[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany_tbl\]?
   replace_to: dbo.Universe_Company2_tbl
 - re_replace_this: \bCIQDataSnapshot\b
-  replace_to: CIQData.
+  replace_to: CIQData
 
 
 
