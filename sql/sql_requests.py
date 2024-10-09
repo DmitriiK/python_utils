@@ -301,7 +301,7 @@ class SQL_Communicator:
         return create_sp_stm, sp_name
 
     def get_table_definition(self, table_name, new_table_name: str = None, drop_existing: bool = True):
-        schema_name, table_name, _ = get_table_schema_db(table_name)
+        table_name, schema_name, _ = get_table_schema_db(table_name)
 
         column_query = f"""
         SELECT 
@@ -361,7 +361,7 @@ class SQL_Communicator:
 
         script = []
         if new_table_name:
-            schema_name, table_name, _ = get_table_schema_db(new_table_name)
+            table_name, schema_name, _ = get_table_schema_db(new_table_name)
         if drop_existing:
             script.append(f"drop TABLE if exists [{schema_name}].[{table_name}];" + SQL_GO)
         script.append(f"CREATE TABLE [{schema_name}].[{table_name}] (")
@@ -462,7 +462,7 @@ class SQL_Communicator:
                 if obj_name:
                     if obj_name not in already_created:
                         db_name = db_name or self.DB_NAME
-                        big_script += f'USE {db_name}' + SQL_GO + obj_def + SQL_GO
+                        big_script += f'\n----{obj_name}-----' + f'\nUSE {db_name}' + SQL_GO + obj_def
                         if output_dir:
                             outo.output_to_file(output_dir, ot_folder, obj_name, obj_def, db_name)
                         already_created.add(obj_name)  # to avoid double creation of child views been refe-ed from many parent views
