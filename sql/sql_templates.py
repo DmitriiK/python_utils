@@ -1,6 +1,6 @@
 # Query to get column names and PK status
 GET_COLUMNS = """
- SELECT
+  SELECT
         c.name  AS column_name,
         t.name AS data_type,
         c.max_length,
@@ -12,7 +12,7 @@ GET_COLUMNS = """
         CAST(ISNULL(idc.increment_value, 0) as INT) AS increment_value,
         ISNULL(dc.definition, '') AS default_constr,
         ISNULL(cc.definition, '') AS check_constr,
-        CASE WHEN i.index_id IS NOT NULL THEN 1 ELSE 0 END AS is_pk
+       CASE WHEN pki.index_id IS NOT NULL THEN 1 ELSE 0 END AS is_pk
     FROM
         sys.columns c
     JOIN
@@ -21,16 +21,14 @@ GET_COLUMNS = """
         sys.identity_columns idc ON c.object_id = idc.object_id AND c.column_id = idc.column_id
     LEFT JOIN
         sys.default_constraints dc ON c.default_object_id = dc.object_id
-    LEFT JOIN
-        sys.check_constraints cc ON c.object_id = cc.parent_object_id AND c.column_id = cc.parent_column_id
-    LEFT JOIN
-        sys.index_columns ic ON c.object_id = ic.object_id AND c.column_id = ic.column_id
-    LEFT JOIN
-        sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id AND (i.is_primary_key = 1 OR  i.type=1)
+    OUTER APPLY (SELECT TOP 1 cc.* FROM   sys.check_constraints cc WHERE c.object_id = cc.parent_object_id AND c.column_id = cc.parent_column_id) cc
+    OUTER APPLY (SELECT TOP 1 i.index_id FROM sys.index_columns ic 
+				 JOIN  sys.indexes i 
+                    ON ic.object_id = i.object_id AND ic.index_id = i.index_id AND (i.is_primary_key = 1 OR  i.type=1)
+				 WHERE c.object_id = ic.object_id AND c.column_id = ic.column_id) pki
     WHERE
         c.object_id = OBJECT_ID('{table_name}')
         ORDER BY c.column_id
-
 """
 
 GET_DEPENDENCIES = """

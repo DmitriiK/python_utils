@@ -252,14 +252,15 @@ class SQL_Communicator:
             new_db_name = apply_mappings(db_name, rppts)  # need to replace db names as well
             is_replaced = db_name != new_db_name
             db_name = new_db_name
-        return new_view_def + SQL_GO, is_replaced, db_name
+        return new_view_def, is_replaced, db_name
 
     def generate_merge_stm(self, tbl_srs: str, tbl_dst: str) -> str:
         cols = self.get_columns(table_name=tbl_dst)
         insrt = ', '.join([x.column_name for x in cols])
         insrt2 = ', '.join([f'SRC.{x.column_name}' for x in cols])
-
-        join_cond = ' AND '.join([f'DST.{x.column_name} = SRC.{x.column_name}' for x in cols if x.is_in_pk])
+        has_pk = any(x.is_in_pk for x in cols)  # shit happens
+        join_cond = ' AND '.join([f'DST.{x.column_name} = SRC.{x.column_name}' for ind, x in enumerate(cols)
+                                  if (x.is_in_pk and has_pk) or ind == 0])
         non_pk_cols = [x.column_name for x in cols if not x.is_in_pk]
         if non_pk_cols:
             update_part = ',\n'.join([f'{x} = SRC.{x}' for x in non_pk_cols])
@@ -462,7 +463,7 @@ class SQL_Communicator:
                 if obj_name:
                     if obj_name not in already_created:
                         db_name = db_name or self.DB_NAME
-                        big_script += f'\n----{obj_name}-----' + f'\nUSE {db_name}' + SQL_GO + obj_def
+                        big_script += f'\n----{obj_name}-----' + f'\nUSE {db_name}' + SQL_GO + obj_def + SQL_GO
                         if output_dir:
                             outo.output_to_file(output_dir, ot_folder, obj_name, obj_def, db_name)
                         already_created.add(obj_name)  # to avoid double creation of child views been refe-ed from many parent views

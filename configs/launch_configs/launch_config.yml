@@ -4,33 +4,27 @@ output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 
 entities:
   - Professional_Compensation
-  - RefData_committee
-  - RefData_CompensationType
   - Professional_Person
   - Professional_BiographyPerson
   - Professional_Professional
   - Professional_ProfessionalCoverage
-  - RefData_ProFunction
   - Professional_ProToProFunction
 
 src_views_ents: 
   # for views have to create another set of names due to naming inconsistencies
   - Professional_Compensation
-  - RefData_committee
-  - RefData_CompensationType
   - Professional_Person
   - Professional_BiographyPerson
   - Professional_Professional
   - Professional_ProfessionalCoverage
-  - RefData_ProFunction
   - Professional_ProToProFunction
 
 stages:
-  # - CLONE_TABLE
-  #- CLONE_STG_TABLE
-  - CLONE_VIEW
-  #  - CREATE_MERGE_SP
-  #- CREATE_PULL_SP
+  - CLONE_TABLE
+  - CLONE_STG_TABLE
+  # - CLONE_VIEW
+  - CREATE_MERGE_SP
+  - CREATE_PULL_SP
 
 code_replacements:
 - re_replace_this: \[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany_tbl\]?

@@ -63,7 +63,7 @@ class TestSQL(unittest.TestCase):
                 spdef, spname = mdr.create_pull_sp(entity_name, nc.default_rename(entity_name), source_view_name)
                 assert spdef, spname
                 sps += spdef + "\nGO\n"
-                outo.output_to_file(output_dir, "StoredProcedures", spname, spdef)
+                outo.output_to_file(output_dir, "StoredProcedures", spname, spdef, mdr.DB_NAME)
             outo.output_to_clipboard(sps)
 
     def test_create_table_stm(self):
