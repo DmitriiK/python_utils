@@ -250,7 +250,7 @@ class SQL_Communicator:
         if len(nnn) > 2:
             db_name = nnn[-3]
             new_db_name = apply_mappings(db_name, rppts)  # need to replace db names as well
-            is_replaced = db_name == new_db_name
+            is_replaced = db_name != new_db_name
             db_name = new_db_name
         return new_view_def + SQL_GO, is_replaced, db_name
 
