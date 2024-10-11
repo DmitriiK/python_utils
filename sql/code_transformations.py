@@ -30,4 +30,4 @@ def apply_create_or_alter_view(input_str: str):
 
 
 def apply_sql_formating(script: str):
-    return sqlparse.format(script, reindent=True, keyword_case='upper')
+    return sqlparse.format(script, reindent=True, keyword_case='upper').replace(' END', '\nEND')
