@@ -36,6 +36,7 @@ class SQL_OBJECT_TYPE(Enum):
     VIEW = 3
     PULL_SP = 4
     MERGE_SP = 5
+    DIRECT_MERGE_SP = 6
 
 
 class SQL_Communicator:
@@ -281,12 +282,16 @@ class SQL_Communicator:
         return f"""INSERT INTO {tbl_dst} ({cols_str})
         SELECT {cols_str} FROM {view_srs}"""
 
-    def create_merge_sp(self, entity_name, entity_name2=None, create_or_alter=True):
-        entity_name2 = entity_name2 or nc.default_rename(entity_name)
-        sp_name = nc.merge_sp_name(entity_name=entity_name2)
+    def create_merge_sp(self, entity_name, entity_name2=None, create_or_alter=True, is_direct: bool = False):
+        entity_name2 = entity_name2 or nc.default_rename(entity_name)        
         trg_table = nc.table_name(entity_name2)
-        stg_tbl = nc.stg_table_name(entity_name)
-        merge_stm = self.generate_merge_stm(tbl_srs=stg_tbl, tbl_dst=trg_table)
+        if is_direct:
+            _, tbl_srs = self.get_view_names(entity_name)
+            sp_name = nc.merge_direct_sp_name(entity_name2)
+        else:
+            tbl_srs = nc.stg_table_name(entity_name)
+            sp_name = nc.merge_sp_name(entity_name2)
+        merge_stm = self.generate_merge_stm(tbl_srs=tbl_srs, tbl_dst=trg_table)
         create_sp_stm = MERGE_SP.format(sp_name=sp_name, merge_stm=merge_stm, or_alter=or_alter(create_or_alter))
         create_sp_stm = apply_sql_formating(create_sp_stm)
         return create_sp_stm, sp_name
@@ -298,7 +303,7 @@ class SQL_Communicator:
         sp_name = nc.pull_sp_name(entity_name=entity_name2)
         dst_tbl = nc.stg_table_name(entity_name)
         ins_stm = self.generate_insert_stm(source_view_name, dst_tbl)
-        create_sp_stm = PULL_SP.format(sp_name=sp_name, table_name=dst_tbl, ins_stm=ins_stm, 
+        create_sp_stm = PULL_SP.format(sp_name=sp_name, table_name=dst_tbl, ins_stm=ins_stm + '\n',
                                        or_alter=or_alter(create_or_alter))
         create_sp_stm = apply_sql_formating(create_sp_stm)                              
         return create_sp_stm, sp_name
@@ -455,10 +460,12 @@ class SQL_Communicator:
                     obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)
                     ot_folder = 'StoredProcedures'
                 case SQL_OBJECT_TYPE.MERGE_SP:
-                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name))                 
+                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name), True, False)                 
                     ot_folder = 'StoredProcedures'
-            
-            if new_objects is None:  # most of types returns defintions for single object
+                case SQL_OBJECT_TYPE.DIRECT_MERGE_SP:
+                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name), True, True)                 
+                    ot_folder = 'StoredProcedures' 
+            if new_objects is None:  # most of types returns definitions for single object
                 new_objects = [(obj_name, obj_def, None)]
 
             for obj_name, obj_def, db_name in new_objects:

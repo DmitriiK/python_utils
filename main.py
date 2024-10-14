@@ -42,6 +42,11 @@ def launch_stage(mdr: SQL_Communicator, stage: str, cfg: LaunchConfig):
         case 'CREATE_MERGE_SP':
             sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.MERGE_SP, ents=cfg.entities, output_dir=cfg.output_folder)
             return sp_defs
+
+        case 'CREATE_DIRECT_MERGE_SP':
+            sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.DIRECT_MERGE_SP, ents=cfg.entities, output_dir=cfg.output_folder)
+            return sp_defs            
+
         case _:
             logging.warning(f'stage {stage} not defined')
 

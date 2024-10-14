@@ -20,11 +20,12 @@ src_views_ents:
   - Professional_ProToProFunction
 
 stages:
-  - CLONE_TABLE
-  - CLONE_STG_TABLE
+  #- CLONE_TABLE
+  #- CLONE_STG_TABLE
   # - CLONE_VIEW
   - CREATE_MERGE_SP
-  - CREATE_PULL_SP
+  - CREATE_DIRECT_MERGE_SP
+  #- CREATE_PULL_SP
 
 code_replacements:
 - re_replace_this: \[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany_tbl\]?

@@ -33,6 +33,10 @@ def merge_sp_name(entity_name):
     return f'dbo.MergeData_{entity_name}_prc'
 
 
+def merge_direct_sp_name(entity_name):
+    return f'dbo.MergeDataDirect_{entity_name}_prc'
+
+
 def pull_sp_name(entity_name):
     return f'dbo.PullData_{entity_name}_prc'
 
