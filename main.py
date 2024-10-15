@@ -24,11 +24,11 @@ def setup_args():
 def launch_stage(mdr: SQL_Communicator, stage: str, cfg: LaunchConfig):
     match stage:
         case 'CLONE_TABLE':
-            tables_def = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.TABLE, ents=cfg.entities, output_dir=cfg.output_folder)
+            tables_def = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.TABLE, ents=cfg.entities)
             return tables_def
             #  nc_view_name=nc.source_view_name to do configuration
         case 'CLONE_STG_TABLE':
-            tables_def = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.STG_TABLE, ents=cfg.entities, output_dir=cfg.output_folder)
+            tables_def = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.STG_TABLE, ents=cfg.entities)
             return tables_def
         case 'CLONE_VIEW':
             view_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.VIEW, ents=cfg.src_views_ents or cfg.entities,
@@ -40,12 +40,12 @@ def launch_stage(mdr: SQL_Communicator, stage: str, cfg: LaunchConfig):
                                                 output_dir=cfg.output_folder)
             return sp_defs
         case 'CREATE_MERGE_SP':
-            sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.MERGE_SP, ents=cfg.entities, output_dir=cfg.output_folder)
+            sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.MERGE_SP, ents=cfg.entities)
             return sp_defs
 
         case 'CREATE_DIRECT_MERGE_SP':
-            sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.DIRECT_MERGE_SP, ents=cfg.entities, output_dir=cfg.output_folder)
-            return sp_defs            
+            sp_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.DIRECT_MERGE_SP, ents=cfg.entities, src_views_ents=cfg.src_views_ents)
+            return sp_defs
 
         case _:
             logging.warning(f'stage {stage} not defined')
@@ -67,7 +67,7 @@ def main():
                 cfg.src_views_ents = args.src_views_ents.split(',')
     logging.info(cfg)
     ss = ''  # string with sql script to copy to clipboard
-    with SQL_Communicator() as mdr:
+    with SQL_Communicator(cfg.output_folder) as mdr:
         for stage in cfg.stages:
             logging.info(f'------launching state {stage}----------')
             stage_script = launch_stage(mdr, stage, cfg)

@@ -3,27 +3,30 @@ input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeed
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 
 entities:
-  - Professional_Compensation
-  - Professional_Person
-  - Professional_BiographyPerson
-  - Professional_Professional
-  - Professional_ProfessionalCoverage
-  - Professional_ProToProFunction
+  - GICS_GICS
+  - Symbol_GVKeyEnhanced
+  - Symbol_DandBSymbol
+  - KeyDev_FutureEvent
+  - KeyDev_FutureEventToObjectToEventType
+  - FutureEventMkt_FutureEventMkt
+  - FutureEventMkt_FutureEventMktSplitInfo
+  - FutureEventMkt_FutureEventMktToObjectToEventType  
 
-src_views_ents: 
-  # for views have to create another set of names due to naming inconsistencies
-  - Professional_Compensation
-  - Professional_Person
-  - Professional_BiographyPerson
-  - Professional_Professional
-  - Professional_ProfessionalCoverage
-  - Professional_ProToProFunction
+src_views_ents:  # for views have to create another set of names due to naming inconsistencies
+  - GICS_GICS 
+  - Symbol_GVKeyEnhanced
+  - Symbol_DandB
+  - KeyDev_FutureEvent
+  - KeyDev_FutureEventToObjectToEventType
+  - KeyDev_FutureEventMkt
+  - KeyDev_FutureEventMktSplitInfo
+  - KeyDev_FutureEventMktToObjectToEventType
 
 stages:
   #- CLONE_TABLE
   #- CLONE_STG_TABLE
   # - CLONE_VIEW
-  - CREATE_MERGE_SP
+  # - CREATE_MERGE_SP
   - CREATE_DIRECT_MERGE_SP
   #- CREATE_PULL_SP
 

@@ -48,6 +48,9 @@ class SQL_Communicator:
         self.connection = pyodbc.connect(self.conn_str, timeout=60)
         print("Connection successful!")
         return self
+        
+    def __init__(self, output_dir: str):
+        self.output_dir = output_dir
 
     def get_execution_metrics(self, stm: str):
         tm0 = datetime.now()
@@ -282,11 +285,11 @@ class SQL_Communicator:
         return f"""INSERT INTO {tbl_dst} ({cols_str})
         SELECT {cols_str} FROM {view_srs}"""
 
-    def create_merge_sp(self, entity_name, entity_name2=None, create_or_alter=True, is_direct: bool = False):
+    def create_merge_sp(self, entity_name, entity_name2=None, src_views_ent=None, create_or_alter=True, is_direct: bool = False):
         entity_name2 = entity_name2 or nc.default_rename(entity_name)        
         trg_table = nc.table_name(entity_name2)
         if is_direct:
-            _, tbl_srs = self.get_view_names(entity_name)
+            _, tbl_srs = self.get_view_names(src_views_ent or entity_name)
             sp_name = nc.merge_direct_sp_name(entity_name2)
         else:
             tbl_srs = nc.stg_table_name(entity_name)
@@ -428,8 +431,8 @@ class SQL_Communicator:
 
         return "\n".join(script)
 
-    def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [], output_dir: str = None,
-                              rppts: List[ReplacementPattern] = None): 
+    def create_new_sql_object(self, ot: SQL_OBJECT_TYPE, ents: List[str], src_views_ents: List[str] = [],
+                              rppts: List[ReplacementPattern] = None):
         big_script, new_objects, already_created = '', [], set()
         zz = zip(ents, src_views_ents) if src_views_ents else ents
         for tp in zz:
@@ -459,12 +462,13 @@ class SQL_Communicator:
                 case SQL_OBJECT_TYPE.PULL_SP:
                     obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)
                     ot_folder = 'StoredProcedures'
-                case SQL_OBJECT_TYPE.MERGE_SP:
-                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name), True, False)                 
+                case SQL_OBJECT_TYPE.MERGE_SP | SQL_OBJECT_TYPE.DIRECT_MERGE_SP:
+                    is_direct = ot == SQL_OBJECT_TYPE.DIRECT_MERGE_SP
+                    obj_def, obj_name = self.create_merge_sp(entity_name=entity_name,
+                                                             entity_name2=nc.default_rename(entity_name),
+                                                             src_views_ent=src_views_ent, is_direct=is_direct)             
                     ot_folder = 'StoredProcedures'
-                case SQL_OBJECT_TYPE.DIRECT_MERGE_SP:
-                    obj_def, obj_name = self.create_merge_sp(entity_name, nc.default_rename(entity_name), True, True)                 
-                    ot_folder = 'StoredProcedures' 
+
             if new_objects is None:  # most of types returns definitions for single object
                 new_objects = [(obj_name, obj_def, None)]
 
@@ -473,8 +477,8 @@ class SQL_Communicator:
                     if obj_name not in already_created:
                         db_name = db_name or self.DB_NAME
                         big_script += f'\n----{obj_name}-----' + f'\nUSE {db_name}' + SQL_GO + obj_def + SQL_GO
-                        if output_dir:
-                            outo.output_to_file(output_dir, ot_folder, obj_name, obj_def, db_name)
+                        if self.output_dir:
+                            outo.output_to_file(self.output_dir, ot_folder, obj_name, obj_def, db_name)
                         already_created.add(obj_name)  # to avoid double creation of child views been refe-ed from many parent views
                 else:
                     logging.warning(f'could not create {ot} for {entity_name}. Skipping.')
