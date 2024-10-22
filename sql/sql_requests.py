@@ -49,8 +49,10 @@ class SQL_Communicator:
         print("Connection successful!")
         return self
         
-    def __init__(self, output_dir: str):
+    def __init__(self, output_dir: str, fail_on_exception: bool = True):
         self.output_dir = output_dir
+        self.fail_on_exception = fail_on_exception
+        self.failed_entities = []
 
     def get_execution_metrics(self, stm: str):
         tm0 = datetime.now()
@@ -439,35 +441,41 @@ class SQL_Communicator:
             entity_name = tp[0] if src_views_ents else tp
             src_views_ent = tp[1] if src_views_ents else None
             new_objects = None
-            match ot:
-                case SQL_OBJECT_TYPE.TABLE:
-                    table_name = nc.table_name(entity_name)
-                    obj_name = nc.table_name(nc.default_rename(entity_name))
-                    obj_def = self.get_table_definition(table_name, obj_name)
-                    ot_folder = 'Tables'
-                case SQL_OBJECT_TYPE.STG_TABLE:
-                    table_name = nc.table_name(entity_name)
-                    obj_name = nc.stg_table_name(entity_name)
-                    obj_def = self.get_table_definition(table_name, obj_name)
-                    ot_folder = 'Tables'
-                case SQL_OBJECT_TYPE.VIEW:
-                    view_name, view_name2 = self.get_view_names(entity_name)
-                    if not view_name:
-                        logging.warning(f'View for {entity_name} was not found. Have to skip view cloning')
-                        continue
-                    new_views = self.deep_clone_view(view_name, view_name2, rppts=rppts)
-                    new_objects = [(v[1], v[0], v[4]) for v in new_views]
+            try:
+                match ot:
+                    case SQL_OBJECT_TYPE.TABLE:
+                        table_name = nc.table_name(entity_name)
+                        obj_name = nc.table_name(nc.default_rename(entity_name))
+                        obj_def = self.get_table_definition(table_name, obj_name)
+                        ot_folder = 'Tables'
+                    case SQL_OBJECT_TYPE.STG_TABLE:
+                        table_name = nc.table_name(entity_name)
+                        obj_name = nc.stg_table_name(entity_name)
+                        obj_def = self.get_table_definition(table_name, obj_name)
+                        ot_folder = 'Tables'
+                    case SQL_OBJECT_TYPE.VIEW:
+                        view_name, view_name2 = self.get_view_names(entity_name)
+                        if not view_name:
+                            logging.warning(f'View for {entity_name} was not found. Have to skip view cloning')
+                            continue
+                        new_views = self.deep_clone_view(view_name, view_name2, rppts=rppts)
+                        new_objects = [(v[1], v[0], v[4]) for v in new_views]
 
-                    ot_folder = 'Views'
-                case SQL_OBJECT_TYPE.PULL_SP:
-                    obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)
-                    ot_folder = 'StoredProcedures'
-                case SQL_OBJECT_TYPE.MERGE_SP | SQL_OBJECT_TYPE.DIRECT_MERGE_SP:
-                    is_direct = ot == SQL_OBJECT_TYPE.DIRECT_MERGE_SP
-                    obj_def, obj_name = self.create_merge_sp(entity_name=entity_name,
-                                                             entity_name2=nc.default_rename(entity_name),
-                                                             src_views_ent=src_views_ent, is_direct=is_direct)             
-                    ot_folder = 'StoredProcedures'
+                        ot_folder = 'Views'
+                    case SQL_OBJECT_TYPE.PULL_SP:
+                        obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)
+                        ot_folder = 'StoredProcedures'
+                    case SQL_OBJECT_TYPE.MERGE_SP | SQL_OBJECT_TYPE.DIRECT_MERGE_SP:
+                        is_direct = ot == SQL_OBJECT_TYPE.DIRECT_MERGE_SP
+                        obj_def, obj_name = self.create_merge_sp(entity_name=entity_name,
+                                                                 entity_name2=nc.default_rename(entity_name),
+                                                                 src_views_ent=src_views_ent, is_direct=is_direct)
+                        ot_folder = 'StoredProcedures'
+            except Exception as ex:
+                logging.error(f'failed to do {ot} for {entity_name} due to exception: {ex}')
+                self.failed_entities.append(entity_name)
+                if self.fail_on_exception:
+                    raise ex
 
             if new_objects is None:  # most of types returns definitions for single object
                 new_objects = [(obj_name, obj_def, None)]

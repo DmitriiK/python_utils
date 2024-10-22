@@ -9,6 +9,7 @@ class ReplacementPattern(BaseModel):
 
 
 class LaunchConfig(BaseModel):
+    fail_on_exception: bool = Field(True, description="if no - we are go on with batch exectuion when face some exception of one entity")
     input_folder: str = Field(None, description="path to folder with SQL files with metadata")
     output_folder: str = Field(None, description="output folder for newly created scripts")
     entities: List[str] = Field(None, description="list of entitites to process with pipeline")
