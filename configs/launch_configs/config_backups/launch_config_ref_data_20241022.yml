@@ -1,0 +1,72 @@
+
+fail_on_exception: False
+input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeedEngineMI2\dbo'
+output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
+
+entities:
+  - RefData_AlternateCompanyNameType
+  - RefData_BusinessRelSourceType
+  - RefData_BusinessRelType
+  - RefData_CharType
+  - RefData_CharTypeToSubType
+  - RefData_CompanyRelType
+  - RefData_CompetitorSourceType
+  - RefData_SecurityGroup
+  - RefData_IndexTradingItemType
+  - RefData_SecuritySubType
+  - RefData_TradingItemStatus
+  - Refdata_SecurityType
+  - RefData_SecurityFeature
+  - RefData_IndustryToSIC
+  - RefData_KeyDocumentExhibitTypeGroup
+  - RefData_KeyDocumentGroup
+  - RefData_KeyDocumentType
+  - RefData_Language
+  - RefData_PeopleBasic_ProFunction
+  - RefData_ProductSourceType
+  - RefData_SearchCompanyNameType
+
+
+src_views_ents:  # for views have to create another set of names due to naming inconsistencies
+  - RefData_AlternateCompanyNameType
+  - RefData_BusinessRelSourceType
+  - RefData_BusinessRelType
+  - RefData_CharType
+  - RefData_CharTypeToSubType
+  - RefData_CompanyRelType
+  - RefData_CompetitorSourceType
+  - RefData_IDCSecurityGroup
+  - RefData_IDCSecurityIndexTradingItemType
+  - RefData_IDCSecuritySubType
+  - RefData_IDCSecurityTradingItemStatus
+  - RefData_IDCSecurityType
+  - RefData_IDCSecurityFeature
+  - RefData_IndustryToSIC
+  # - RefData_KeyDocumentExhibitTypeGroup
+  # - RefData_KeyDocumentGroup
+  # - RefData_KeyDocumentType
+  - RefData_Language
+  - RefData_PeopleBasic_ProFunction
+  - RefData_ProductSourceType
+  - RefData_SearchCompanyNameType
+
+stages:
+   # - CLONE_TABLE
+  #- CLONE_STG_TABLE
+ - CLONE_VIEW
+  # - CREATE_MERGE_SP
+  # - CREATE_DIRECT_MERGE_SP
+  #- CREATE_PULL_SP
+
+code_replacements:
+- re_replace_this: \[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany\]?
+  replace_to: dbo.Universe_Company2
+- re_replace_this: \bCIQDataSnapshot\b
+  replace_to: CIQData
+
+
+
+
+
+
+
