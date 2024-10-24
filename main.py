@@ -74,6 +74,8 @@ def main():
 
     pyperclip.copy(ss)
     print(f'script content has been copied to the clipboard, {len(ss)} symbols')
+    if mdr.failed_entities:
+        print(f'failed for {mdr.failed_entities}')
 
 
 if __name__ == "__main__":
