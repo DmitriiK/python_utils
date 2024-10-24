@@ -7,7 +7,6 @@ entities:
   - CompanyRel_CompanyRel
   - Competitors_Competitors
   - Competitors_CompetitorToSource
-  - RefData_committee
   - PeopleBasic_Person
   - PeopleBasic_ProToProFunction
   - CompanyNames_AlternateCompanyName
@@ -19,7 +18,6 @@ src_views_ents:
   - CompanyRel_CompanyRel
   - Competitors_Competitors
   - Competitors_CompetitorToSource
-  - RefData_committee
   - Professional_PeopleBasic_Person
   - Professional_PeopleBasic_ProToProFunction
   - CompanyNames_AlternateCompanyName
