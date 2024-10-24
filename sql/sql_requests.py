@@ -7,7 +7,7 @@ from datetime import datetime
 
 import sql.config as sql_config 
 from sql.data_classes import SQL_Object, DB_Object_Type
-from configs.lauch_config import ReplacementPattern
+from configs.lauch_config import ReplacementPattern, LaunchConfig
 from sql.sql_templates import GET_COLUMNS, MERGE_STM, MERGE_SP, MERGE_STM_WITHOUT_UPDATE, PULL_SP, or_alter, GET_DEPENDENCIES
 import sql.naming_convention as nc
 from sql.code_transformations import apply_mappings, apply_sql_formating, apply_create_or_alter_view
@@ -49,9 +49,8 @@ class SQL_Communicator:
         print("Connection successful!")
         return self
         
-    def __init__(self, output_dir: str, fail_on_exception: bool = True):
-        self.output_dir = output_dir
-        self.fail_on_exception = fail_on_exception
+    def __init__(self, lcfg: LaunchConfig):
+        self.lcfg = lcfg
         self.failed_entities = []
 
     def get_execution_metrics(self, stm: str):
@@ -192,8 +191,10 @@ class SQL_Communicator:
             return None, None
 
         view_name = view_name.split('.')[-1]  # to eliminate schema name
-        view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
-        return view_name, view_name2
+        if self.lcfg.use_source_view_clone:
+            view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
+            return view_name, view_name2
+        return view_name, view_name
 
     def deep_clone_view(self, view_name: str,
                         view_name2: str,
@@ -474,7 +475,7 @@ class SQL_Communicator:
             except Exception as ex:
                 logging.error(f'failed to do {ot} for {entity_name} due to exception: {ex}')
                 self.failed_entities.append(entity_name)
-                if self.fail_on_exception:
+                if self.lcfg.fail_on_exception:
                     raise ex
 
             if new_objects is None:  # most of types returns definitions for single object
@@ -485,8 +486,8 @@ class SQL_Communicator:
                     if obj_name not in already_created:
                         db_name = db_name or self.DB_NAME
                         big_script += f'\n----{obj_name}-----' + f'\nUSE {db_name}' + SQL_GO + obj_def + SQL_GO
-                        if self.output_dir:
-                            outo.output_to_file(self.output_dir, ot_folder, obj_name, obj_def, db_name)
+                        if self.lcfg.output_folder:
+                            outo.output_to_file(self.lcfg.output_folder, ot_folder, obj_name, obj_def, db_name)
                         already_created.add(obj_name)  # to avoid double creation of child views been refe-ed from many parent views
                 else:
                     logging.warning(f'could not create {ot} for {entity_name}. Skipping.')

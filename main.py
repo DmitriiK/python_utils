@@ -66,7 +66,7 @@ def main():
                 cfg.src_views_ents = args.src_views_ents.split(',')
     logging.info(cfg)
     ss = ''  # string with sql script to copy to clipboard
-    with SQL_Communicator(cfg.output_folder, cfg.fail_on_exception) as mdr:
+    with SQL_Communicator(cfg) as mdr:
         for stage in cfg.stages:
             logging.info(f'------launching state {stage}----------')
             stage_script = launch_stage(mdr, stage, cfg)

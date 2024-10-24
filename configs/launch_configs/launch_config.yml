@@ -1,32 +1,19 @@
 
 fail_on_exception: False
+use_source_view_clone: False
 input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeedEngineMI2\dbo'
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 
 entities:
-  - CompanyRel_CompanyRel
-  - Competitors_Competitors
-  - Competitors_CompetitorToSource
-  - PeopleBasic_Person
-  - PeopleBasic_ProToProFunction
-  - CompanyNames_AlternateCompanyName
-  - CompanyNames_SearchCompanyName
+  - KeyDocument_KeyDocumentToSecurity
 
 
-
-src_views_ents: 
-  - CompanyRel_CompanyRel
-  - Competitors_Competitors
-  - Competitors_CompetitorToSource
-  - Professional_PeopleBasic_Person
-  - Professional_PeopleBasic_ProToProFunction
-  - CompanyNames_AlternateCompanyName
-  - CompanyNames_SearchCompanyName
+src_views_ents: []
 
 stages:
   #- CLONE_TABLE
   # - CLONE_STG_TABLE
-  - CLONE_VIEW
+  # - CLONE_VIEW
   - CREATE_MERGE_SP
   # - CREATE_DIRECT_MERGE_SP
   - CREATE_PULL_SP
