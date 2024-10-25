@@ -1,11 +1,11 @@
 
-fail_on_exception: False
-use_source_view_clone: False
+fail_on_exception: True
+use_source_view_clone: True
 input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeedEngineMI2\dbo'
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 
 entities:
-  - KeyDocument_KeyDocumentToSecurity
+  - CompanyNames_NativeCompanyName
 
 
 src_views_ents: []
@@ -14,9 +14,9 @@ stages:
   #- CLONE_TABLE
   # - CLONE_STG_TABLE
   # - CLONE_VIEW
+  - CREATE_PULL_SP
   - CREATE_MERGE_SP
   # - CREATE_DIRECT_MERGE_SP
-  - CREATE_PULL_SP
 
 code_replacements:
 - re_replace_this: \b\[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany\]?\b
