@@ -49,7 +49,7 @@ class SQL_Communicator:
         print("Connection successful!")
         return self
         
-    def __init__(self, lcfg: LaunchConfig):
+    def __init__(self, lcfg: LaunchConfig = None):
         self.lcfg = lcfg
         self.failed_entities = []
 
