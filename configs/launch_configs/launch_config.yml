@@ -5,17 +5,24 @@ input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeed
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 
 entities:
-  - CompanyNames_NativeCompanyName
-
+  - RefData_SecurityType
+  - RefData_SecurityGroup
+  - RefData_TradingItemStatus
+  - RefData_IndexTradingItemType
+  - RefData_SecurityFeature
+  - RefData_CharType
+  - RefData_CharTypeToSubType
+  - RefData_IndustryToSIC
+  - RefData_SecurityFeature
 
 src_views_ents: []
 
 stages:
-  #- CLONE_TABLE
+  - CLONE_TABLE
   # - CLONE_STG_TABLE
   # - CLONE_VIEW
-  - CREATE_PULL_SP
-  - CREATE_MERGE_SP
+  #- CREATE_PULL_SP
+  #- CREATE_MERGE_SP
   # - CREATE_DIRECT_MERGE_SP
 
 code_replacements:
