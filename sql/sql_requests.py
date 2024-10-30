@@ -270,10 +270,14 @@ class SQL_Communicator:
         has_pk = any(x.is_in_pk for x in cols)  # shit happens
         join_cond = ' AND '.join([f'DST.{x.column_name} = SRC.{x.column_name}' for ind, x in enumerate(cols)
                                   if (x.is_in_pk and has_pk) or ind == 0])
-        non_pk_cols = [x.column_name for x in cols if not x.is_in_pk]
+        non_pk_cols = [(x.column_name, x.data_type) for x in cols if not x.is_in_pk]
         if non_pk_cols:
-            update_part = ',\n'.join([f'{x} = SRC.{x}' for x in non_pk_cols])
-            update_cond = ' OR '.join([f"ISNULL(DST.{x}, 0) <> ISNULL(SRC.{x}, 0) " for x in non_pk_cols])
+            def get_zero(data_type: str):
+                # zero value, used in legacy code for comparison of nullable date columns
+                zdt = "'1900-01-01'"  
+                return zdt if 'date' in data_type else 0
+            update_part = ',\n'.join([f'{x} = SRC.{x}' for x, _ in non_pk_cols])
+            update_cond = ' OR '.join([f"ISNULL(DST.{coln}, {get_zero(dttp)}) <> ISNULL(SRC.{coln}, {get_zero(dttp)}) " for coln, dttp in non_pk_cols])
             stm = MERGE_STM.format(tbl_dst=tbl_dst, tbl_srs=tbl_srs, join_cond=join_cond, update_cond=update_cond,
                                    update_part=update_part, insrt=insrt, insrt2=insrt2)
         else:  # if all columns are in PK 
