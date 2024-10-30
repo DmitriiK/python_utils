@@ -5,67 +5,49 @@ input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeed
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 
 entities:
-  - KeyDevPlus_KeyDev
-  - KeyDevPlus_KeyDevToObjectToEventType
-  - KeyDocument_KeyDocument
-  - KeyDocument_KeyDocumentToSecurity
-  - PeopleBasic_Person
-  - PeopleBasic_Professional
-  - PeopleBasic_ProToProFunction
-  - Product_product
-  - Professional_BiographyPerson
-  - Professional_Compensation
-  - Professional_Person
-  - Professional_PersonProfessional
-  - Professional_PersonProfessionalCompensation
-  - Professional_Professional
-  - Professional_ProfessionalCoverage
-  - Professional_ProToProFunction
-  - Symbol_CusipEnhanced
-  - Symbol_DandBSymbol
-  - Symbol_FTCusip6Symbol
-  - Symbol_FTCusip9Symbol
-  - Symbol_FTISINSymbol
-  - Symbol_FTSEDOLSymbol
-  - Symbol_FTTickerSymbol
-  - Symbol_GVKeyEnhanced
-  - Symbol_ISINEnhanced
-  - Symbol_SECCIKEnhanced
-  - Symbol_SECCIKSymbol
-  - Symbol_SedolEnhanced
-  - Symbol_TickerEnhanced
-  - AddtlCompany_Address
-  - AddtlCompany_BusinessDescription
-  - AddtlCompany_LongBusinessDescription
-  - CompanyBiteSize_CompanyBiteSize
-  - CompanyGeosOfInt_CompanyGeosOfInterest
-  - CompanyIndOfInt_CompanyIndustriesOfInterest
-  - CompanyNames_AlternateCompanyName
-  - CompanyNames_NativeCompanyName
-  - CompanyNames_SearchCompanyName
-  - CompanyRel_CompanyRel
-  - CompanyStagesOfInt_CompanyStagesOfInterest
-  - CompDetail_CompensationAdjustment
-  - CompDetail_CompensationDetail
-  - Competitors_Competitors
-  - Competitors_CompetitorToSource
+  - CompanyIndustry_IndustryTree
+  - DataItem
+  - DataItemBankRegulatory
+  - DataItemConversionRule
+  - DataItemEstimate
+  - DataItemEstimateRel
+  - DataItemEstimateRelType
+  - DataItemFinancial
+  - DataItemGroup
+  - DataItemIndex
+  - DataItemIndexLevelType
+  - DataItemPIT
+  - DataItemToCompustatMnemonic
+  - DataItemTransaction
+  - ValueType
+  - DataItemGroupToDataItem
+  - DataItemPIT
+  - DataItemToCompustatMnemonic
+  - DRO_DeletedRetainedObjects
   - FinAuditor_FinancialToAdvisor
-  - FutureEventMkt_FutureEventMkt
-  - FutureEventMkt_FutureEventMktSplitInfo
-  - FutureEventMkt_FutureEventMktToObjectToEventType
-  - GICS_GICS
-  - KeyDev_FutureEvent
-  - KeyDev_FutureEventToObjectToEventType
-  - KeyDev_KeyDev
-  - KeyDev_KeyDevToObjectToEventType
+  - GlobalEcon_Entity
+  - GlobalEcon_EntityTimeSeries
+  - GlobalEcon_FrequencyType
+  - GlobalEcon_Scale
+  - GlobalEcon_SeasonalAjustmentType
+  - GlobalEcon_SubType
+  - GlobalEcon_Unit
+  - GlobalEcon_ValueType
+  - IDCEquitySecurity_Security
+  - IDCEquitySecurity_TradingItem
+  - IDCEquitySecurityToSecurityFeature
+  - IDCSecurity_Security
+  - IDCSecurity_TradingItem
+  - IDCSecurityToSecurityFeature
+  - Symbol_ISTeledataSymbol
 src_views_ents: []
 
 stages:
   #- CLONE_TABLE
-  #- CLONE_STG_TABLE
+   # - CLONE_STG_TABLE
   #- CLONE_VIEW
   #- CREATE_PULL_SP
-  - CREATE_MERGE_SP
+ - CREATE_MERGE_SP
   # - CREATE_DIRECT_MERGE_SP
 
 code_replacements:
