@@ -7,47 +7,52 @@ output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 entities:
   - CompanyIndustry_IndustryTree
   - DataItem
-  - DataItemBankRegulatory
+  #- DataItemBankRegulatory
   - DataItemConversionRule
   - DataItemEstimate
   - DataItemEstimateRel
   - DataItemEstimateRelType
   - DataItemFinancial
-  - DataItemGroup
+  #- DataItemGroup
   - DataItemIndex
   - DataItemIndexLevelType
-  - DataItemPIT
-  - DataItemToCompustatMnemonic
   - DataItemTransaction
   - ValueType
-  - DataItemGroupToDataItem
-  - DataItemPIT
-  - DataItemToCompustatMnemonic
+  #- DataItemGroupToDataItem
+  #- DataItemPIT
+  #- DataItemToCompustatMnemonic
   - DRO_DeletedRetainedObjects
   - FinAuditor_FinancialToAdvisor
-  - GlobalEcon_Entity
-  - GlobalEcon_EntityTimeSeries
-  - GlobalEcon_FrequencyType
-  - GlobalEcon_Scale
-  - GlobalEcon_SeasonalAjustmentType
-  - GlobalEcon_SubType
-  - GlobalEcon_Unit
-  - GlobalEcon_ValueType
-  - IDCEquitySecurity_Security
-  - IDCEquitySecurity_TradingItem
-  - IDCEquitySecurityToSecurityFeature
-  - IDCSecurity_Security
-  - IDCSecurity_TradingItem
-  - IDCSecurityToSecurityFeature
+
   - Symbol_ISTeledataSymbol
-src_views_ents: []
+src_views_ents: 
+  - CompanyIndustry_IndustryTree
+  - DataItem_DataItem
+  #- DataItem_DataItemBankRegulatory
+  - DataItem_DataItemConversionRule
+  - DataItem_DataItemEstimate
+  - DataItem_DataItemEstimateRel
+  - DataItem_DataItemEstimateRelType
+  - DataItem_DataItemFinancial
+  #- DataItem_DataItemGroup # not found
+  - DataItem_DataItemIndex
+  - DataItem_DataItemIndexLevelType
+  - DataItem_DataItemTransaction
+  - DataItem_ValueType
+  # - DataItem_DataItemGroupToDataItem no writes
+  #- DataItem_DataItemPIT # pull from \Stored Procedures\DataItem_PullData_prc.sql
+  # pull from \Stored Procedures\DataItem_PullData_prc.sql - DataItem_DataItemToCompustatMnemonic
+  - DRO_DeletedRetainedObjects
+  - FinAuditor_FinancialToAdvisor
+
+  - Symbol_ISTeledata
 
 stages:
   #- CLONE_TABLE
    # - CLONE_STG_TABLE
-  #- CLONE_VIEW
-  #- CREATE_PULL_SP
- - CREATE_MERGE_SP
+  - CLONE_VIEW
+  - CREATE_PULL_SP
+  # - CREATE_MERGE_SP
   # - CREATE_DIRECT_MERGE_SP
 
 code_replacements:
