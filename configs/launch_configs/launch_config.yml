@@ -5,53 +5,30 @@ input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeed
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 
 entities:
-  - CompanyIndustry_IndustryTree
-  - DataItem
+  - GlobalEcon_Entity
+  - GlobalEcon_EntityTimeSeries
   #- DataItemBankRegulatory
-  - DataItemConversionRule
-  - DataItemEstimate
-  - DataItemEstimateRel
-  - DataItemEstimateRelType
-  - DataItemFinancial
   #- DataItemGroup
-  - DataItemIndex
-  - DataItemIndexLevelType
-  - DataItemTransaction
-  - ValueType
   #- DataItemGroupToDataItem
   #- DataItemPIT
   #- DataItemToCompustatMnemonic
-  - DRO_DeletedRetainedObjects
-  - FinAuditor_FinancialToAdvisor
 
-  - Symbol_ISTeledataSymbol
 src_views_ents: 
-  - CompanyIndustry_IndustryTree
-  - DataItem_DataItem
+  - GlobalEcon_Entity
+  - GlobalEcon_EntityTimeSeries
   #- DataItem_DataItemBankRegulatory
-  - DataItem_DataItemConversionRule
-  - DataItem_DataItemEstimate
-  - DataItem_DataItemEstimateRel
-  - DataItem_DataItemEstimateRelType
-  - DataItem_DataItemFinancial
   #- DataItem_DataItemGroup # not found
-  - DataItem_DataItemIndex
-  - DataItem_DataItemIndexLevelType
-  - DataItem_DataItemTransaction
-  - DataItem_ValueType
   # - DataItem_DataItemGroupToDataItem no writes
   #- DataItem_DataItemPIT # pull from \Stored Procedures\DataItem_PullData_prc.sql
   # pull from \Stored Procedures\DataItem_PullData_prc.sql - DataItem_DataItemToCompustatMnemonic
-  - DRO_DeletedRetainedObjects
-  - FinAuditor_FinancialToAdvisor
 
-  - Symbol_ISTeledata
 
 stages:
   #- CLONE_TABLE
    # - CLONE_STG_TABLE
-  - CLONE_VIEW
-  - CREATE_PULL_SP
+  #- CLONE_VIEW
+  - CLONE_VIEW_PLACE_HOLDER
+  #- CREATE_PULL_SP
   # - CREATE_MERGE_SP
   # - CREATE_DIRECT_MERGE_SP
 

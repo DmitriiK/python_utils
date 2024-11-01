@@ -37,6 +37,7 @@ class SQL_OBJECT_TYPE(Enum):
     PULL_SP = 4
     MERGE_SP = 5
     DIRECT_MERGE_SP = 6
+    VIEW_PLACE_HOLDER = 7
 
 
 class SQL_Communicator:
@@ -195,6 +196,11 @@ class SQL_Communicator:
             view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
             return view_name, view_name2
         return view_name, view_name
+
+    @staticmethod
+    def create_placeholder_view(view_name: str, sql: str = None):
+        return f"""CREATE VIEW {view_name} as
+                {sql or 'SELECT 1 as stub'}"""
 
     def deep_clone_view(self, view_name: str,
                         view_name2: str,
@@ -465,7 +471,10 @@ class SQL_Communicator:
                             continue
                         new_views = self.deep_clone_view(view_name, view_name2, rppts=rppts)
                         new_objects = [(v[1], v[0], v[4]) for v in new_views]
-
+                        ot_folder = 'Views'
+                    case SQL_OBJECT_TYPE.VIEW_PLACE_HOLDER:
+                        obj_name = nc.source_view_name(nc.default_rename(entity_name)).split('.')[-1]
+                        obj_def = self.create_placeholder_view(view_name=obj_name)
                         ot_folder = 'Views'
                     case SQL_OBJECT_TYPE.PULL_SP:
                         obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)
