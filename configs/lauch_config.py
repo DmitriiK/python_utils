@@ -17,6 +17,7 @@ class LaunchConfig(BaseModel):
     src_views_ents: Optional[List[str]] = Field(None, description="list of entitites for views to process with pipeline")
     stages: List[str] = Field(None, description="steps of execution")
     code_replacements: List[ReplacementPattern] = Field(None)
+    create_view_pattern: Optional[str] = Field(description='pattern fro view creation')
 
 
 def load_launch_config(file_path: str) -> LaunchConfig:

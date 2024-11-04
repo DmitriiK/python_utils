@@ -196,7 +196,7 @@ class SQL_Communicator:
             view_name2 = nc_view_name(nc.default_rename(entity_name)).split('.')[-1]
             return view_name, view_name2
         return view_name, view_name
-
+  
     @staticmethod
     def create_placeholder_view(view_name: str, sql: str = None):
         return f"""CREATE VIEW {view_name} as
@@ -303,10 +303,10 @@ class SQL_Communicator:
         trg_table = nc.table_name(entity_name2)
         if is_direct:
             _, tbl_srs = self.get_view_names(src_views_ent or entity_name)
-            sp_name = nc.merge_direct_sp_name(entity_name2)
+            # sp_name = nc.merge_direct_sp_name(entity_name2)
         else:
             tbl_srs = nc.stg_table_name(entity_name)
-            sp_name = nc.merge_sp_name(entity_name2)
+        sp_name = nc.merge_sp_name(entity_name2)
         merge_stm = self.generate_merge_stm(tbl_srs=tbl_srs, tbl_dst=trg_table)
         create_sp_stm = MERGE_SP.format(sp_name=sp_name, merge_stm=merge_stm, or_alter=or_alter(create_or_alter))
         create_sp_stm = apply_sql_formating(create_sp_stm)
@@ -474,7 +474,8 @@ class SQL_Communicator:
                         ot_folder = 'Views'
                     case SQL_OBJECT_TYPE.VIEW_PLACE_HOLDER:
                         obj_name = nc.source_view_name(nc.default_rename(entity_name)).split('.')[-1]
-                        obj_def = self.create_placeholder_view(view_name=obj_name)
+                        sql = self.lcfg.create_view_pattern.format(entity_name=entity_name) if self.lcfg.create_view_pattern else None
+                        obj_def = self.create_placeholder_view(view_name=obj_name, sql=sql)
                         ot_folder = 'Views'
                     case SQL_OBJECT_TYPE.PULL_SP:
                         obj_def, obj_name = self.create_pull_sp(entity_name, nc.default_rename(entity_name), src_views_ent)

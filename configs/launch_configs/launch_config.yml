@@ -5,8 +5,12 @@ input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeed
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 
 entities:
-  - GlobalEcon_Entity
-  - GlobalEcon_EntityTimeSeries
+  - GlobalEcon_FrequencyType
+  - GlobalEcon_Scale
+  - GlobalEcon_SeasonalAjustmentType
+  - GlobalEcon_SubType
+  - GlobalEcon_Unit
+  - GlobalEcon_ValueType
   #- DataItemBankRegulatory
   #- DataItemGroup
   #- DataItemGroupToDataItem
@@ -14,29 +18,35 @@ entities:
   #- DataItemToCompustatMnemonic
 
 src_views_ents: 
-  - GlobalEcon_Entity
-  - GlobalEcon_EntityTimeSeries
+  - GlobalEcon_FrequencyType
+  - GlobalEcon_Scale
+  - GlobalEcon_SeasonalAjustmentType
+  - GlobalEcon_SubType
+  - GlobalEcon_Unit
+  - GlobalEcon_ValueType
   #- DataItem_DataItemBankRegulatory
   #- DataItem_DataItemGroup # not found
   # - DataItem_DataItemGroupToDataItem no writes
   #- DataItem_DataItemPIT # pull from \Stored Procedures\DataItem_PullData_prc.sql
-  # pull from \Stored Procedures\DataItem_PullData_prc.sql - DataItem_DataItemToCompustatMnemonic
+  #  - DataItem_DataItemToCompustatMnemonic
 
 
 stages:
   #- CLONE_TABLE
    # - CLONE_STG_TABLE
   #- CLONE_VIEW
-  - CLONE_VIEW_PLACE_HOLDER
+  - CREATE_VIEW_PLACE_HOLDER
   #- CREATE_PULL_SP
   # - CREATE_MERGE_SP
-  # - CREATE_DIRECT_MERGE_SP
+ # - CREATE_DIRECT_MERGE_SP
 
 code_replacements:
 - re_replace_this: \b\[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany\]?\b
   replace_to: dbo.Universe_Company2
 - re_replace_this: \bCIQDataSnapshot\b
   replace_to: CIQData
+
+create_view_pattern: "SELECT * FROM DataFeedPrep.DataFeedPrep.dbo.dataFeedOut_{entity_name}_vw"
 
 
 

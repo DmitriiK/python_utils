@@ -37,7 +37,7 @@ def launch_stage(mdr: SQL_Communicator, stage: str, cfg: LaunchConfig):
                                                   rppts=cfg.code_replacements)
             return view_defs
             #  nc_view_name=nc.source_view_name to do configuration
-        case 'CLONE_VIEW_PLACE_HOLDER':
+        case 'CREATE_VIEW_PLACE_HOLDER':
             view_defs = mdr.create_new_sql_object(ot=SQL_OBJECT_TYPE.VIEW_PLACE_HOLDER, ents=cfg.src_views_ents or cfg.entities)
             return view_defs
             
