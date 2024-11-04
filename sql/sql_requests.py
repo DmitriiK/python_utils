@@ -280,8 +280,13 @@ class SQL_Communicator:
         if non_pk_cols:
             def get_zero(data_type: str):
                 # zero value, used in legacy code for comparison of nullable date columns
-                zdt = "'1900-01-01'"  
-                return zdt if 'date' in data_type else 0
+                data_type = data_type.lower()
+                if 'date' in data_type:
+                    return "'1900-01-01'"
+                if 'char' in data_type or 'text' in data_type:
+                    return "''"
+                return 0
+
             update_part = ',\n'.join([f'{x} = SRC.{x}' for x, _ in non_pk_cols])
             update_cond = ' OR '.join([f"ISNULL(DST.{coln}, {get_zero(dttp)}) <> ISNULL(SRC.{coln}, {get_zero(dttp)}) " for coln, dttp in non_pk_cols])
             stm = MERGE_STM.format(tbl_dst=tbl_dst, tbl_srs=tbl_srs, join_cond=join_cond, update_cond=update_cond,
