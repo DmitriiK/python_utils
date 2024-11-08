@@ -5,48 +5,29 @@ input_folder: 'C:\Users\dmitrii_kalmanovich\source\repos\DataFeedEngine\DataFeed
 output_folder: 'D:\Code\DatabaseBuild\Instances\DATAFEEDENGINE\Databases'
 
 entities:
-  - GlobalEcon_FrequencyType
-  - GlobalEcon_Scale
-  - GlobalEcon_SeasonalAjustmentType
-  - GlobalEcon_SubType
-  - GlobalEcon_Unit
-  - GlobalEcon_ValueType
-  #- DataItemBankRegulatory
-  #- DataItemGroup
-  #- DataItemGroupToDataItem
-  #- DataItemPIT
-  #- DataItemToCompustatMnemonic
+  - IDCSecurity_Security
+  - IDCSecurity_TradingItem
+  - IDCSecurityToSecurityFeature
 
-src_views_ents: 
-  - GlobalEcon_FrequencyType
-  - GlobalEcon_Scale
-  - GlobalEcon_SeasonalAjustmentType
-  - GlobalEcon_SubType
-  - GlobalEcon_Unit
-  - GlobalEcon_ValueType
-  #- DataItem_DataItemBankRegulatory
-  #- DataItem_DataItemGroup # not found
-  # - DataItem_DataItemGroupToDataItem no writes
-  #- DataItem_DataItemPIT # pull from \Stored Procedures\DataItem_PullData_prc.sql
-  #  - DataItem_DataItemToCompustatMnemonic
-
+src_views_ents:
+  - Security_IDCSecurity
+  - Security_IDCSecurityTradingItem
+  - Security_IDCSecurityToSecurityFeature 
 
 stages:
   #- CLONE_TABLE
-   # - CLONE_STG_TABLE
-  #- CLONE_VIEW
-  - CREATE_VIEW_PLACE_HOLDER
-  #- CREATE_PULL_SP
-  # - CREATE_MERGE_SP
- # - CREATE_DIRECT_MERGE_SP
+  #- CLONE_STG_TABLE
+  - CLONE_VIEW
+  - CREATE_PULL_SP
+  #- CREATE_VIEW_PLACE_HOLDER
+  #- CREATE_MERGE_SP
+  # - CREATE_DIRECT_MERGE_SP
 
 code_replacements:
 - re_replace_this: \b\[?(DatafeedEngine\]?|DatafeedEngineCache)\.\[?dbo\]?\.\[?Universe_DailyCompany\]?\b
   replace_to: dbo.Universe_Company2
 - re_replace_this: \bCIQDataSnapshot\b
   replace_to: CIQData
-
-create_view_pattern: "SELECT * FROM DataFeedPrep.DataFeedPrep.dbo.dataFeedOut_{entity_name}_vw"
 
 
 
