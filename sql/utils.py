@@ -18,6 +18,10 @@ def get_table_schema_db(object_name: str) -> Tuple[str, str, str]:
         case _:
             raise ValueError('incorrect name of object')
 
+def get_table_schema(object_name: str) -> Tuple[str, str]:
+    table_name, schema_name, _ = get_table_schema_db(object_name)
+    return table_name, schema_name
+
 
 def rename_sql_object(sql_def: str, new_name: str):
     # Regular expression to match creating patterns and capture the original object name

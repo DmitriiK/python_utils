@@ -42,16 +42,16 @@ class SQL_OBJECT_TYPE(Enum):
 
 class SQL_Communicator:
     def __enter__(self):
-        self.DB_NAME = sql_config.DB_NAME
-        self.conn_str = sql_config.CONN_STR
-        logging.info(self.conn_str)
         print('connecting...')
         self.connection = pyodbc.connect(self.conn_str, timeout=60)
         print("Connection successful!")
         return self
         
-    def __init__(self, lcfg: LaunchConfig = None):
+    def __init__(self, lcfg: LaunchConfig = None, db_name: str = None, conn_str: str = None):
         self.lcfg = lcfg
+        self.DB_NAME = db_name or sql_config.DB_NAME
+        self.conn_str = conn_str or sql_config.CONN_STR
+        logging.info(self.conn_str)
         self.failed_entities = []
 
     def get_execution_metrics(self, stm: str):
