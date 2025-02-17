@@ -35,16 +35,52 @@ def create_xfc_ds_table(source_table_name: str, xfc_database_id: XFC_SourceDB, t
 
 def create_xfc_ds_table_columns(source_table_name: str, source_table_id: int, ):
     def xfc_data_type(col) -> str:
-        return f"'{col.data_type} {f'({col.precision})' if 'char' in col.data_type else ''}'"
+        return f"'{col.data_type}{f'({col.precision})' if 'char' in col.data_type else ''}'"
+    def xfc_data_key_flag(col) -> str:
+        return "'y'" if col.is_in_pk else "''"
     
     with SQL_Communicator() as sql_dt:
         cols = sql_dt.get_columns(table_name=source_table_name)
         print(cols)
-    col_lst = [f"('{col.column_name}', {xfc_data_type(col)})" 
+    col_lst = [f"('{col.column_name}', {xfc_data_type(col)}, {xfc_data_key_flag(col)})" 
                 for col in cols]
 
-    cols_vals = ', '.join(col_lst)
-    sql = cols_vals
+    cols_vals = '\n, '.join(col_lst)
+
+    sql = f"""
+DECLARE @source_table_id int ;
+SELECT @source_table_id  = {source_table_id} 
+
+DECLARE @max_id int
+SELECT @max_id = MAX(scp.sourceColumnId) FROM xfc_SourceColumnProfile scp;
+
+WITH cte_fields AS (
+    SELECT *
+    FROM (VALUES
+       {cols_vals}
+    ) AS cte_fields(field_name, data_type, is_in_pk)
+)
+,new_fls as
+(SELECT * from cte_fields f 
+	WHERE f.field_name 	NOT IN (SELECT sourceColumnName  FROM xfc_SourceColumnProfile scp where scp.sourceTableId = @source_table_id)
+	)
+
+,cte_f_rn AS (
+SELECT 
+     ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS rn,
+    * FROM new_fls
+	)
+--final write
+INSERT INTO xfc_SourceColumnProfile(sourceColumnId, sourceTableId, sourceColumnName, DataType, KeyFlag, indexColumnOrder)
+SELECT 
+	rn + @max_id as new_id,
+	@source_table_id as source_table_id, 
+	field_name, data_type, 
+	is_in_pk,
+	CASE WHEN is_in_pk = 'y' THEN rn ELSE '' END as index_col_order
+FROM cte_f_rn
+"""
+
     return sql
 
 
