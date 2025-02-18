@@ -25,7 +25,8 @@ ColumnInfo = namedtuple('ColumnInfo', ['column_name',
                                        'increment_value',
                                        'default_constr',
                                        'check_constr',
-                                       'is_in_pk'
+                                       'is_in_pk',
+                                       'pk_ordinal'
                                        ])
 
 SQL_GO = "\nGO\n"
@@ -95,7 +96,8 @@ class SQL_Communicator:
             row.increment_value,
             row.default_constr,
             row.check_constr,
-            row.is_pk)
+            row.is_pk,
+            row.pk_ordinal)
             for row in rows]
         cursor.close()
 

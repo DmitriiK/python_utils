@@ -23,7 +23,7 @@ class XFC_Creator:
         
         tbl, sch = get_table_schema(source_table_name)
         cols = self.sql_dt.get_columns(table_name=source_table_name)
-        col_lst = [f"('{col.column_name}', {xfc_data_type(col)}, {xfc_data_key_flag(col)})" 
+        col_lst = [f"('{col.column_name}', {xfc_data_type(col)}, {xfc_data_key_flag(col)}, {col.pk_ordinal or 'NULL'})" 
                     for col in cols]
         cols_vals = '\n\t\t,'.join(col_lst)
         sql = f"""
@@ -44,7 +44,7 @@ class XFC_Creator:
         SELECT *
         FROM (VALUES
         {cols_vals}
-        ) AS cte_fields(field_name, data_type, is_in_pk)
+        ) AS cte_fields(field_name, data_type, is_in_pk, key_ordinal)
     )
     ,new_fls as
     (SELECT * from cte_fields f 
@@ -63,7 +63,7 @@ class XFC_Creator:
         @source_table_id as source_table_id, 
         field_name, data_type, 
         is_in_pk,
-        CASE WHEN is_in_pk = 'y' THEN rn ELSE '' END as index_col_order
+        key_ordinal as index_col_order
     FROM cte_f_rn
     """
         return sql
