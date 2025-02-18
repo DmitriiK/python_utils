@@ -16,6 +16,7 @@ from sql.utils import get_table_schema_db, rename_sql_object, create_obj_name_fo
 
 ColumnInfo = namedtuple('ColumnInfo', ['column_name',
                                        'data_type',
+                                       'max_length',
                                        'precision',
                                        'scale',
                                        'is_nullable',
@@ -85,6 +86,7 @@ class SQL_Communicator:
         columns = [ColumnInfo(
             row.column_name,
             row.data_type,
+            row.max_length,
             row.precision,
             row.scale,
             row.is_nullable,

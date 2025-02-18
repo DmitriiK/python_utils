@@ -17,7 +17,7 @@ class XFC_Creator:
  
     def create_xfc_ds_table_columns(self, source_table_name: str, xfc_database_id: XFC_SourceDB):
         def xfc_data_type(col) -> str:
-            return f"'{col.data_type}{f'({col.precision})' if 'char' in col.data_type else ''}'"
+            return f"'{col.data_type}{f'({col.max_length})' if 'char' in col.data_type else ''}'"
         def xfc_data_key_flag(col) -> str:
             return "'y'" if col.is_in_pk else "''"
         
