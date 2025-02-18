@@ -85,7 +85,9 @@ def create_xfc_ds_table(source_table_name: str, xfc_database_id: XFC_SourceDB, t
             values (@source_table_id, {xfc_database_id.value}, '{tbl}', '{sch}', '{tds.value}', '{population_group}')
         END
         ELSE -- if @source_table_id IS not NULL
-            UPDATE stp  SET stp.TransDeliveryStyle =  'FULL', stp.PopGroup='EqSecurity'FROM  xfc_SourceTableProfile stp WHERE sourceTableId=@source_table_id
+            UPDATE stp  SET stp.TransDeliveryStyle = '{tds.value}', 
+            stp.PopGroup ='{population_group}'
+            FROM  xfc_SourceTableProfile stp WHERE sourceTableId=@source_table_id
 
         """
     return sql
