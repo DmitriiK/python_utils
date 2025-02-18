@@ -72,7 +72,6 @@ class XFC_Creator:
 def create_xfc_ds_table(source_table_name: str, xfc_database_id: XFC_SourceDB, tds: TransDeliveryStyle, population_group: str):
 
     tbl, sch = get_table_schema(source_table_name)
-
     sql = f"""
     DECLARE @source_table_id int 
     SELECT top 1  @source_table_id = sourceTableId FROM xfc_SourceTableProfile t 
@@ -80,14 +79,16 @@ def create_xfc_ds_table(source_table_name: str, xfc_database_id: XFC_SourceDB, t
             ORDER BY sourceTableId DESC;
     IF @source_table_id IS NULL
         BEGIN
-        SELECT @source_table_id = MAX(sourceTableId) + 1 FROM xfc_SourceTableProfile t;
-        INSERT INTO xfc_SourceTableProfile (sourceTableId, databaseId, sourceTableName, sourceTableSchema, TransDeliveryStyle, PopGroup) 
-            values (@source_table_id, {xfc_database_id.value}, '{tbl}', '{sch}', '{tds.value}', '{population_group}')
+            SELECT @source_table_id = MAX(sourceTableId) + 1 FROM xfc_SourceTableProfile t;
+            INSERT INTO xfc_SourceTableProfile (sourceTableId, databaseId, sourceTableName, sourceTableSchema, TransDeliveryStyle, PopGroup) 
+                values (@source_table_id, {xfc_database_id.value}, '{tbl}', '{sch}', '{tds.value}', '{population_group}')
+            print 'new entry inserted into xfc_SourceTableProfile table'
         END
         ELSE -- if @source_table_id IS not NULL
-            UPDATE stp  SET stp.TransDeliveryStyle = '{tds.value}', 
+            UPDATE stp  SET 
+            stp.TransDeliveryStyle = '{tds.value}', 
             stp.PopGroup ='{population_group}'
-            FROM  xfc_SourceTableProfile stp WHERE sourceTableId=@source_table_id
-
-        """
+            FROM  xfc_SourceTableProfile stp 
+            WHERE sourceTableId=@source_table_id
+            """
     return sql
