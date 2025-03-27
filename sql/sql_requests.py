@@ -304,7 +304,7 @@ class SQL_Communicator:
         cols = self.get_columns(table_name=tbl_dst)
         cols_str = ','.join([x.column_name for x in cols])
 
-        return f"""INSERT INTO {tbl_dst} ({cols_str})
+        return f"""INSERT INTO {tbl_dst} WITH (TABLOCK) ({cols_str})
         SELECT {cols_str} FROM {view_srs}"""
 
     def create_merge_sp(self, entity_name, entity_name2=None, src_views_ent=None, create_or_alter=True, is_direct: bool = False):

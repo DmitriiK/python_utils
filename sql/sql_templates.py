@@ -60,7 +60,7 @@ MERGE_STM = """ MERGE {tbl_dst} AS DST
                 DELETE
             ;"""
 
-MERGE_STM_WITHOUT_UPDATE = """ MERGE {tbl_dst} AS DST
+MERGE_STM_WITHOUT_UPDATE = """ MERGE {tbl_dst} WITH (TABLOCK) AS DST
             USING   {tbl_srs} as SRC WITH (NOLOCK)
                 ON {join_cond}
             WHEN NOT MATCHED BY TARGET THEN
